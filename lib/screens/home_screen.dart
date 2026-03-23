@@ -1,62 +1,17 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide StepState;
 import 'package:flutter_pulse/core/constants.dart';
+import 'package:flutter_pulse/models/log_entry_model.dart';
+import 'package:flutter_pulse/models/pipeline_step_model.dart';
 
-
-// ─── Data Models ──────────────────────────────────────────────────────────────
-
-enum LogLevel { info, success, error, warning }
-
-class LogEntry {
-  final String message;
-  final LogLevel level;
-  LogEntry(this.message, this.level);
-}
-
-enum StepState { pending, running, done, failed }
-
-class PipelineStep {
-  final String label;
-  final String command;
-  StepState state;
-  PipelineStep(this.label, this.command, {this.state = StepState.pending});
-}
-
-// ─── Root App ─────────────────────────────────────────────────────────────────
-
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'FlutterPulse',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.dark(
-          primary: AppColors.accent,
-          surface: AppColors.surface,
-          background: AppColors.bg,
-        ),
-        useMaterial3: true,
-        fontFamily: 'monospace',
-        scaffoldBackgroundColor: AppColors.bg,
-      ),
-      home: const AppShell(),
-    );
-  }
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-// ─── App Shell ────────────────────────────────────────────────────────────────
-
-class AppShell extends StatefulWidget {
-  const AppShell({super.key});
-
-  @override
-  State<AppShell> createState() => _AppShellState();
-}
-
-class _AppShellState extends State<AppShell> {
+class _HomeScreenState extends State<HomeScreen> {
   int _selectedNav = 0;
   final List<_NavItem> _navItems = const [
     _NavItem(Icons.folder_open_rounded, 'Projects'),
@@ -95,8 +50,6 @@ class _AppShellState extends State<AppShell> {
     );
   }
 }
-
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
 
 class _NavItem {
   final IconData icon;
@@ -146,7 +99,11 @@ class _Sidebar extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 18),
+                  child: const Icon(
+                    Icons.bolt_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 const Text(
@@ -189,12 +146,20 @@ class _Sidebar extends StatelessWidget {
                   hoverColor: AppColors.border.withOpacity(0.5),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.accentGlow : Colors.transparent,
+                      color: isSelected
+                          ? AppColors.accentGlow
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                       border: isSelected
-                          ? Border.all(color: AppColors.accent.withOpacity(0.2), width: 1)
+                          ? Border.all(
+                              color: AppColors.accent.withOpacity(0.2),
+                              width: 1,
+                            )
                           : null,
                     ),
                     child: Row(
@@ -202,28 +167,41 @@ class _Sidebar extends StatelessWidget {
                         Icon(
                           items[i].icon,
                           size: 17,
-                          color: isSelected ? AppColors.accent : AppColors.textSecondary,
+                          color: isSelected
+                              ? AppColors.accent
+                              : AppColors.textSecondary,
                         ),
                         const SizedBox(width: 10),
                         Text(
                           items[i].label,
                           style: TextStyle(
-                            color: isSelected ? AppColors.accent : AppColors.textSecondary,
+                            color: isSelected
+                                ? AppColors.accent
+                                : AppColors.textSecondary,
                             fontSize: 13.5,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
                           ),
                         ),
                         if (i == 0) ...[
                           const Spacer(),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.accent.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Text(
                               '3',
-                              style: TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.w700),
+                              style: TextStyle(
+                                color: AppColors.accent,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ],
@@ -244,14 +222,34 @@ class _Sidebar extends StatelessWidget {
                 CircleAvatar(
                   radius: 14,
                   backgroundColor: AppColors.accentSecondary.withOpacity(0.3),
-                  child: const Text('D', style: TextStyle(color: AppColors.accentSecondary, fontSize: 13, fontWeight: FontWeight.w700)),
+                  child: const Text(
+                    'D',
+                    style: TextStyle(
+                      color: AppColors.accentSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: const [
-                    Text('dev@flutter.io', style: TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w500)),
-                    Text('Pro Plan', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                    Text(
+                      'dev@flutter.io',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      'Pro Plan',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -278,18 +276,30 @@ class _TopBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.folder_rounded, color: AppColors.textMuted, size: 14),
+              const Icon(
+                Icons.folder_rounded,
+                color: AppColors.textMuted,
+                size: 14,
+              ),
               const SizedBox(width: 6),
               Text(
                 '/Users/dev/projects/my_flutter_app',
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5, fontFamily: 'monospace'),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12.5,
+                  fontFamily: 'monospace',
+                ),
               ),
             ],
           ),
           const Spacer(),
           _StatusChip(label: 'dart 3.3.0', icon: Icons.code_rounded),
           const SizedBox(width: 8),
-          _StatusChip(label: 'flutter 3.19.0', icon: Icons.flutter_dash_rounded, color: AppColors.accentSecondary),
+          _StatusChip(
+            label: 'flutter 3.19.0',
+            icon: Icons.flutter_dash_rounded,
+            color: AppColors.accentSecondary,
+          ),
           const SizedBox(width: 8),
           Container(
             width: 8,
@@ -300,7 +310,10 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          const Text('SDK OK', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          const Text(
+            'SDK OK',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          ),
         ],
       ),
     );
@@ -312,7 +325,11 @@ class _StatusChip extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _StatusChip({required this.label, required this.icon, this.color = AppColors.accent});
+  const _StatusChip({
+    required this.label,
+    required this.icon,
+    this.color = AppColors.accent,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -328,7 +345,15 @@ class _StatusChip extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 5),
-          Text(label, style: TextStyle(color: color, fontSize: 11.5, fontFamily: 'monospace', fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11.5,
+              fontFamily: 'monospace',
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -347,9 +372,19 @@ class _PlaceholderPanel extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.construction_rounded, size: 48, color: AppColors.textMuted),
+          Icon(
+            Icons.construction_rounded,
+            size: 48,
+            color: AppColors.textMuted,
+          ),
           const SizedBox(height: 12),
-          Text('$label panel coming soon', style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+          Text(
+            '$label panel coming soon',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+            ),
+          ),
         ],
       ),
     );
@@ -382,7 +417,10 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
 
   final List<LogEntry> _logs = [
     LogEntry('[INFO]    FlutterPulse CI — Build initiated', LogLevel.info),
-    LogEntry('[INFO]    Working directory: /Users/dev/projects/my_flutter_app', LogLevel.info),
+    LogEntry(
+      '[INFO]    Working directory: /Users/dev/projects/my_flutter_app',
+      LogLevel.info,
+    ),
   ];
 
   static final List<List<LogEntry>> _stepLogs = [
@@ -395,13 +433,19 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
     [
       LogEntry('[INFO]    Running flutter pub get...', LogLevel.info),
       LogEntry('[INFO]    Resolving dependencies...', LogLevel.info),
-      LogEntry('[WARNING] Package "http" has a newer version (1.2.1)', LogLevel.warning),
+      LogEntry(
+        '[WARNING] Package "http" has a newer version (1.2.1)',
+        LogLevel.warning,
+      ),
       LogEntry('[SUCCESS] Got 47 packages in 2.3s', LogLevel.success),
     ],
     [
       LogEntry('[INFO]    Running flutter analyze...', LogLevel.info),
       LogEntry('[INFO]    Analyzing 134 Dart files...', LogLevel.info),
-      LogEntry('[WARNING] lib/ui/widgets/card.dart:42 — prefer_const_constructors', LogLevel.warning),
+      LogEntry(
+        '[WARNING] lib/ui/widgets/card.dart:42 — prefer_const_constructors',
+        LogLevel.warning,
+      ),
       LogEntry('[SUCCESS] No critical issues found', LogLevel.success),
     ],
     [
@@ -411,10 +455,19 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
       LogEntry('[SUCCESS] All tests passed in 4.1s', LogLevel.success),
     ],
     [
-      LogEntry('[INFO]    Running flutter build apk --release...', LogLevel.info),
+      LogEntry(
+        '[INFO]    Running flutter build apk --release...',
+        LogLevel.info,
+      ),
       LogEntry('[INFO]    Compiling Dart to native ARM64...', LogLevel.info),
-      LogEntry('[INFO]    Running Gradle task assembleRelease...', LogLevel.info),
-      LogEntry('[SUCCESS] ✓ Built build/app/outputs/flutter-apk/app-release.apk (18.2 MB)', LogLevel.success),
+      LogEntry(
+        '[INFO]    Running Gradle task assembleRelease...',
+        LogLevel.info,
+      ),
+      LogEntry(
+        '[SUCCESS] ✓ Built build/app/outputs/flutter-apk/app-release.apk (18.2 MB)',
+        LogLevel.success,
+      ),
     ],
   ];
 
@@ -428,7 +481,12 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
         s.state = StepState.pending;
       }
       _logs.add(LogEntry('', LogLevel.info));
-      _logs.add(LogEntry('[INFO]    ─── Pipeline started ───────────────────', LogLevel.info));
+      _logs.add(
+        LogEntry(
+          '[INFO]    ─── Pipeline started ───────────────────',
+          LogLevel.info,
+        ),
+      );
     });
     _runStep(0);
   }
@@ -440,7 +498,12 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
         _currentStep = -1;
         _progress = 1.0;
         _logs.add(LogEntry('', LogLevel.info));
-        _logs.add(LogEntry('[SUCCESS] ─── Pipeline completed successfully ───', LogLevel.success));
+        _logs.add(
+          LogEntry(
+            '[SUCCESS] ─── Pipeline completed successfully ───',
+            LogLevel.success,
+          ),
+        );
       });
       return;
     }
@@ -467,7 +530,10 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
       } else {
         t.cancel();
         setState(() => _steps[index].state = StepState.done);
-        _timer = Timer(const Duration(milliseconds: 300), () => _runStep(index + 1));
+        _timer = Timer(
+          const Duration(milliseconds: 300),
+          () => _runStep(index + 1),
+        );
       }
     });
   }
@@ -480,7 +546,12 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
         _steps[_currentStep].state = StepState.failed;
       }
       _logs.add(LogEntry('', LogLevel.info));
-      _logs.add(LogEntry('[ERROR]   ─── Pipeline stopped by user ──────────', LogLevel.error));
+      _logs.add(
+        LogEntry(
+          '[ERROR]   ─── Pipeline stopped by user ──────────',
+          LogLevel.error,
+        ),
+      );
       _currentStep = -1;
     });
   }
@@ -547,12 +618,20 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                 children: [
                   const Text(
                     'Pipeline Control',
-                    style: TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.2),
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'my_flutter_app  •  main branch',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -580,7 +659,11 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
           Row(
             children: List.generate(_steps.length * 2 - 1, (i) {
               if (i.isOdd) {
-                return _StepConnector(done: _steps[i ~/ 2].state == StepState.done || _steps[(i ~/ 2) + 1].state == StepState.done);
+                return _StepConnector(
+                  done:
+                      _steps[i ~/ 2].state == StepState.done ||
+                      _steps[(i ~/ 2) + 1].state == StepState.done,
+                );
               }
               final stepIdx = i ~/ 2;
               return _PipelineStepChip(step: _steps[stepIdx], index: stepIdx);
@@ -608,11 +691,18 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.terminal_rounded, size: 13, color: AppColors.textSecondary),
+                    const Icon(
+                      Icons.terminal_rounded,
+                      size: 13,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       'Current Step: ',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12.5,
+                      ),
                     ),
                     Text(
                       _currentStepLabel,
@@ -626,7 +716,11 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                     const Spacer(),
                     Text(
                       '${(_progress * 100).toInt()}%',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontFamily: 'monospace'),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ],
                 ),
@@ -638,7 +732,11 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                     minHeight: 5,
                     backgroundColor: AppColors.border,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      _isRunning ? AppColors.accent : (_progress >= 1.0 ? AppColors.success : AppColors.textMuted),
+                      _isRunning
+                          ? AppColors.accent
+                          : (_progress >= 1.0
+                                ? AppColors.success
+                                : AppColors.textMuted),
                     ),
                   ),
                 ),
@@ -664,9 +762,20 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.receipt_long_rounded, size: 14, color: AppColors.textSecondary),
+              const Icon(
+                Icons.receipt_long_rounded,
+                size: 14,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: 7),
-              const Text('Live Console', style: TextStyle(color: AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+              const Text(
+                'Live Console',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(width: 10),
               if (_isRunning)
                 Row(
@@ -674,21 +783,44 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                     Container(
                       width: 7,
                       height: 7,
-                      decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
+                      decoration: const BoxDecoration(
+                        color: AppColors.success,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                     const SizedBox(width: 5),
-                    const Text('LIVE', style: TextStyle(color: AppColors.success, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                    const Text(
+                      'LIVE',
+                      style: TextStyle(
+                        color: AppColors.success,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
                   ],
                 ),
               const Spacer(),
-              Text('${_logs.length} lines', style: const TextStyle(color: AppColors.textMuted, fontSize: 11.5)),
+              Text(
+                '${_logs.length} lines',
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 11.5,
+                ),
+              ),
               const SizedBox(width: 14),
               InkWell(
                 borderRadius: BorderRadius.circular(4),
                 onTap: () => setState(() => _logs.clear()),
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                  child: Text('Clear', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  child: Text(
+                    'Clear',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -701,7 +833,8 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
             child: ListView.builder(
               controller: _logScrollController,
               itemCount: _logs.length,
-              itemBuilder: (ctx, i) => _LogLine(entry: _logs[i], lineNumber: i + 1),
+              itemBuilder: (ctx, i) =>
+                  _LogLine(entry: _logs[i], lineNumber: i + 1),
             ),
           ),
         ),
@@ -776,7 +909,11 @@ class _PipelineStepChip extends StatelessWidget {
           ],
           Text(
             step.label,
-            style: TextStyle(color: textColor, fontSize: 12.5, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: textColor,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -836,7 +973,13 @@ class _GlowButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               boxShadow: isDisabled
                   ? null
-                  : [BoxShadow(color: color.withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 3))],
+                  : [
+                      BoxShadow(
+                        color: color.withOpacity(0.2),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -845,7 +988,11 @@ class _GlowButton extends StatelessWidget {
                 const SizedBox(width: 7),
                 Text(
                   label,
-                  style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),

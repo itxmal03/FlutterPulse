@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_pulse/core/constants.dart';
 import 'package:flutter_pulse/screens/home_screen.dart';
 
 void main() {
@@ -13,8 +14,17 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'FlutterPulse',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: HomeScreen(),
+      theme: ThemeData(
+        colorScheme: ColorScheme.dark(
+          primary: AppColors.accent,
+          surface: AppColors.surface,
+          background: AppColors.bg,
+        ),
+        useMaterial3: true,
+        fontFamily: 'monospace',
+        scaffoldBackgroundColor: AppColors.bg,
+      ),
+      home: const HomeScreen(),
     );
   }
 }
