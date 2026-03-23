@@ -3,6 +3,8 @@ import 'package:flutter/material.dart' hide StepState;
 import 'package:flutter_pulse/core/constants.dart';
 import 'package:flutter_pulse/models/log_entry_model.dart';
 import 'package:flutter_pulse/models/pipeline_step_model.dart';
+import 'package:flutter_pulse/ui/widgets/sidebar.dart';
+import 'package:flutter_pulse/ui/widgets/topbar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,11 +15,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedNav = 0;
-  final List<_NavItem> _navItems = const [
-    _NavItem(Icons.folder_open_rounded, 'Projects'),
-    _NavItem(Icons.history_rounded, 'Build History'),
-    _NavItem(Icons.extension_rounded, 'Plugins'),
-    _NavItem(Icons.settings_rounded, 'Settings'),
+  final List<NavItem> _navItems = const [
+    NavItem(Icons.folder_open_rounded, 'Projects'),
+    NavItem(Icons.history_rounded, 'Build History'),
+    NavItem(Icons.extension_rounded, 'Plugins'),
+    NavItem(Icons.settings_rounded, 'Settings'),
   ];
 
   @override
@@ -26,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppColors.bg,
       body: Row(
         children: [
-          _Sidebar(
+          Sidebar(
             items: _navItems,
             selected: _selectedNav,
             onSelect: (i) => setState(() => _selectedNav = i),
@@ -35,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Column(
               children: [
-                const _TopBar(),
+                const TopBar(),
                 const Divider(height: 1, color: AppColors.border),
                 Expanded(
                   child: _selectedNav == 0
@@ -51,314 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _NavItem {
-  final IconData icon;
-  final String label;
-  const _NavItem(this.icon, this.label);
-}
 
-class _Sidebar extends StatelessWidget {
-  final List<_NavItem> items;
-  final int selected;
-  final ValueChanged<int> onSelect;
-
-  const _Sidebar({
-    required this.items,
-    required this.selected,
-    required this.onSelect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 220,
-      color: AppColors.sidebar,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Logo area
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
-            child: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.accent, AppColors.accentSecondary],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.accent.withOpacity(0.35),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.bolt_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'FlutterPulse',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(
-              'NAVIGATION',
-              style: TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.4,
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-
-          ...List.generate(items.length, (i) {
-            final isSelected = i == selected;
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              child: Material(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => onSelect(i),
-                  hoverColor: AppColors.border.withOpacity(0.5),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.accentGlow
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                      border: isSelected
-                          ? Border.all(
-                              color: AppColors.accent.withOpacity(0.2),
-                              width: 1,
-                            )
-                          : null,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          items[i].icon,
-                          size: 17,
-                          color: isSelected
-                              ? AppColors.accent
-                              : AppColors.textSecondary,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          items[i].label,
-                          style: TextStyle(
-                            color: isSelected
-                                ? AppColors.accent
-                                : AppColors.textSecondary,
-                            fontSize: 13.5,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                          ),
-                        ),
-                        if (i == 0) ...[
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.accent.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Text(
-                              '3',
-                              style: TextStyle(
-                                color: AppColors.accent,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-
-          const Spacer(),
-          const Divider(color: AppColors.border, height: 1),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: AppColors.accentSecondary.withOpacity(0.3),
-                  child: const Text(
-                    'D',
-                    style: TextStyle(
-                      color: AppColors.accentSecondary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'dev@flutter.io',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      'Pro Plan',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Top Bar ──────────────────────────────────────────────────────────────────
-
-class _TopBar extends StatelessWidget {
-  const _TopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 52,
-      color: AppColors.sidebar,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.folder_rounded,
-                color: AppColors.textMuted,
-                size: 14,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '/Users/dev/projects/my_flutter_app',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12.5,
-                  fontFamily: 'monospace',
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          _StatusChip(label: 'dart 3.3.0', icon: Icons.code_rounded),
-          const SizedBox(width: 8),
-          _StatusChip(
-            label: 'flutter 3.19.0',
-            icon: Icons.flutter_dash_rounded,
-            color: AppColors.accentSecondary,
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: AppColors.success,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 6),
-          const Text(
-            'SDK OK',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-
-  const _StatusChip({
-    required this.label,
-    required this.icon,
-    this.color = AppColors.accent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11.5,
-              fontFamily: 'monospace',
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ─── Placeholder Panel ────────────────────────────────────────────────────────
 
@@ -390,6 +85,8 @@ class _PlaceholderPanel extends StatelessWidget {
     );
   }
 }
+
+
 
 // ─── Pipeline Dashboard ───────────────────────────────────────────────────────
 
