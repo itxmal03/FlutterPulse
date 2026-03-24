@@ -8,12 +8,13 @@ class NavItem {
 }
 
 class Sidebar extends StatelessWidget {
-  final List<NavItem> items;
+  final List<NavItem> navItems;
   final int selected;
   final ValueChanged<int> onSelect;
 
   const Sidebar({
-    required this.items,
+    super.key,
+    required this.navItems,
     required this.selected,
     required this.onSelect,
   });
@@ -26,7 +27,6 @@ class Sidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Logo area
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
             child: Row(
@@ -43,7 +43,7 @@ class Sidebar extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.accent.withOpacity(0.35),
+                        color: AppColors.accent.withValues(alpha: 0.35),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),
@@ -83,7 +83,7 @@ class Sidebar extends StatelessWidget {
           ),
           const SizedBox(height: 6),
 
-          ...List.generate(items.length, (i) {
+          ...List.generate(navItems.length, (i) {
             final isSelected = i == selected;
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -93,7 +93,7 @@ class Sidebar extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(8),
                   onTap: () => onSelect(i),
-                  hoverColor: AppColors.border.withOpacity(0.5),
+                  hoverColor: AppColors.border.withValues(alpha: 0.5),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     padding: const EdgeInsets.symmetric(
@@ -107,7 +107,7 @@ class Sidebar extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                       border: isSelected
                           ? Border.all(
-                              color: AppColors.accent.withOpacity(0.2),
+                              color: AppColors.accent.withValues(alpha: 0.2),
                               width: 1,
                             )
                           : null,
@@ -115,7 +115,7 @@ class Sidebar extends StatelessWidget {
                     child: Row(
                       children: [
                         Icon(
-                          items[i].icon,
+                          navItems[i].icon,
                           size: 17,
                           color: isSelected
                               ? AppColors.accent
@@ -123,7 +123,7 @@ class Sidebar extends StatelessWidget {
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          items[i].label,
+                          navItems[i].label,
                           style: TextStyle(
                             color: isSelected
                                 ? AppColors.accent
@@ -142,7 +142,7 @@ class Sidebar extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.accent.withOpacity(0.15),
+                              color: AppColors.accent.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Text(
@@ -171,7 +171,9 @@ class Sidebar extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 14,
-                  backgroundColor: AppColors.accentSecondary.withOpacity(0.3),
+                  backgroundColor: AppColors.accentSecondary.withValues(
+                    alpha: 0.3,
+                  ),
                   child: const Text(
                     'D',
                     style: TextStyle(

@@ -18,7 +18,6 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.dark(
           primary: AppColors.accent,
           surface: AppColors.surface,
-          background: AppColors.bg,
         ),
         useMaterial3: true,
         fontFamily: 'monospace',
