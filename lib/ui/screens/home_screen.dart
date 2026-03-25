@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart' hide StepState;
 import 'package:flutter_pulse/core/constants.dart';
+import 'package:flutter_pulse/ui/screens/build_history_screen.dart';
+import 'package:flutter_pulse/ui/screens/plugins_screen.dart';
+import 'package:flutter_pulse/ui/screens/settings_screen.dart';
 import 'package:flutter_pulse/ui/widgets/pipeline/pipeline_dashboard.dart';
 import 'package:flutter_pulse/ui/widgets/sidebar.dart';
 import 'package:flutter_pulse/ui/widgets/topbar.dart';
@@ -20,6 +23,13 @@ class _HomeScreenState extends State<HomeScreen> {
     NavItem(Icons.settings_rounded, 'Settings'),
   ];
 
+  final List<Widget> _screens = const [
+    PipelineDashboard(),
+    BuildHistoryScreen(),
+    PluginsScreen(),
+    SettingsScreen(),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,17 +41,13 @@ class _HomeScreenState extends State<HomeScreen> {
             selected: _selectedNav,
             onSelect: (i) => setState(() => _selectedNav = i),
           ),
-          const VerticalDivider(width: 1, color: AppColors.border),
+          VerticalDivider(width: 1, color: AppColors.border),
           Expanded(
             child: Column(
               children: [
                 const TopBar(),
-                const Divider(height: 1, color: AppColors.border),
-                Expanded(
-                  child: _selectedNav == 0
-                      ? const PipelineDashboard()
-                      : _PlaceholderPanel(label: _navItems[_selectedNav].label),
-                ),
+                 Divider(height: 1, color: AppColors.border),
+                Expanded(child: _screens[_selectedNav]),
               ],
             ),
           ),
@@ -51,31 +57,30 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _PlaceholderPanel extends StatelessWidget {
-  final String label;
-  const _PlaceholderPanel({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.construction_rounded,
-            size: 48,
-            color: AppColors.textMuted,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '$label panel coming soon',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// class _PlaceholderPanel extends StatelessWidget {
+//   final String label;
+//   const _PlaceholderPanel({required this.label});
+//   @override
+//   Widget build(BuildContext context) {
+//     return Center(
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         children: [
+//           Icon(
+//             Icons.construction_rounded,
+//             size: 48,
+//             color: AppColors.textMuted,
+//           ),
+//           const SizedBox(height: 12),
+//           Text(
+//             '$label panel coming soon',
+//             style: const TextStyle(
+//               color: AppColors.textSecondary,
+//               fontSize: 14,
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }

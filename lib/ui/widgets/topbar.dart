@@ -14,15 +14,11 @@ class TopBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.folder_rounded,
-                color: AppColors.textMuted,
-                size: 14,
-              ),
+              Icon(Icons.folder_rounded, color: AppColors.textMuted, size: 14),
               const SizedBox(width: 6),
               Text(
                 '/Users/dev/projects/my_flutter_app',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12.5,
                   fontFamily: 'monospace',
@@ -42,13 +38,13 @@ class TopBar extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.success,
               shape: BoxShape.circle,
             ),
           ),
           const SizedBox(width: 6),
-          const Text(
+          Text(
             'SDK OK',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
@@ -61,22 +57,19 @@ class TopBar extends StatelessWidget {
 class _StatusChip extends StatelessWidget {
   final String label;
   final IconData icon;
-  final Color color;
+  final Color? color;
 
-  const _StatusChip({
-    required this.label,
-    required this.icon,
-    this.color = AppColors.accent,
-  });
+  const _StatusChip({required this.label, required this.icon, this.color});
 
   @override
   Widget build(BuildContext context) {
+    final chipColor = color ?? AppColors.accent;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: chipColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: chipColor.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

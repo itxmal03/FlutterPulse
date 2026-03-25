@@ -217,7 +217,7 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
   Widget _buildControlsSection() {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
@@ -230,7 +230,7 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Pipeline Control',
                     style: TextStyle(
                       color: AppColors.textPrimary,
@@ -293,7 +293,7 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
   Widget _buildProgressSection() {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
@@ -305,7 +305,7 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
               children: [
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.terminal_rounded,
                       size: 13,
                       color: AppColors.textSecondary,
@@ -313,14 +313,14 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                     const SizedBox(width: 6),
                     Text(
                       'Current Step: ',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12.5,
                       ),
                     ),
                     Text(
                       _currentStepLabel,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.accent,
                         fontSize: 12.5,
                         fontFamily: 'monospace',
@@ -330,7 +330,7 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                     const Spacer(),
                     Text(
                       '${(_progress * 100).toInt()}%',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                         fontFamily: 'monospace',
@@ -362,7 +362,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
     );
   }
 
-  // ── Logs Section ─────────────────────────────────────────────────────────────
 
   Widget _buildLogsSection() {
     return Column(
@@ -370,19 +369,19 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.surface,
             border: Border(bottom: BorderSide(color: AppColors.border)),
           ),
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.receipt_long_rounded,
                 size: 14,
                 color: AppColors.textSecondary,
               ),
               const SizedBox(width: 7),
-              const Text(
+              Text(
                 'Live Console',
                 style: TextStyle(
                   color: AppColors.textPrimary,
@@ -397,13 +396,13 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                     Container(
                       width: 7,
                       height: 7,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: AppColors.success,
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 5),
-                    const Text(
+                    Text(
                       'LIVE',
                       style: TextStyle(
                         color: AppColors.success,
@@ -417,16 +416,13 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
               const Spacer(),
               Text(
                 '${_logs.length} lines',
-                style: const TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 11.5,
-                ),
+                style: TextStyle(color: AppColors.textMuted, fontSize: 11.5),
               ),
               const SizedBox(width: 14),
               InkWell(
                 borderRadius: BorderRadius.circular(4),
                 onTap: () => setState(() => _logs.clear()),
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                   child: Text(
                     'Clear',
@@ -457,9 +453,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
   }
 }
 
-
-
-
 class _StepConnector extends StatelessWidget {
   final bool done;
   const _StepConnector({required this.done});
@@ -470,7 +463,9 @@ class _StepConnector extends StatelessWidget {
       child: Container(
         height: 1.5,
         margin: const EdgeInsets.symmetric(horizontal: 4),
-        color: done ? AppColors.success.withOpacity(0.4) : AppColors.border,
+        color: done
+            ? AppColors.success.withValues(alpha: 0.4)
+            : AppColors.border,
       ),
     );
   }

@@ -56,7 +56,7 @@ class PipelineStepChip extends StatelessWidget {
               height: 12,
               child: CircularProgressIndicator(
                 strokeWidth: 1.8,
-                valueColor: const AlwaysStoppedAnimation(AppColors.accent),
+                valueColor:  AlwaysStoppedAnimation(AppColors.accent),
               ),
             ),
             const SizedBox(width: 7),

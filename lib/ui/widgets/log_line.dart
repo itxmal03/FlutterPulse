@@ -33,7 +33,7 @@ class LogLine extends StatelessWidget {
             width: 36,
             child: Text(
               lineNumber.toString().padLeft(3),
-              style: const TextStyle(
+              style:  TextStyle(
                 color: AppColors.textMuted,
                 fontSize: 11.5,
                 fontFamily: 'monospace',

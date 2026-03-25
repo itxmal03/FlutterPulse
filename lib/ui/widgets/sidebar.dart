@@ -35,7 +35,7 @@ class Sidebar extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       colors: [AppColors.accent, AppColors.accentSecondary],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -56,7 +56,7 @@ class Sidebar extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Text(
+                Text(
                   'FlutterPulse',
                   style: TextStyle(
                     color: AppColors.textPrimary,
@@ -145,7 +145,7 @@ class Sidebar extends StatelessWidget {
                               color: AppColors.accent.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Text(
+                            child: Text(
                               '3',
                               style: TextStyle(
                                 color: AppColors.accent,
@@ -164,7 +164,7 @@ class Sidebar extends StatelessWidget {
           }),
 
           const Spacer(),
-          const Divider(color: AppColors.border, height: 1),
+          Divider(color: AppColors.border, height: 1),
           Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
@@ -174,8 +174,8 @@ class Sidebar extends StatelessWidget {
                   backgroundColor: AppColors.accentSecondary.withValues(
                     alpha: 0.3,
                   ),
-                  child: const Text(
-                    'D',
+                  child: Text(
+                    'AN',
                     style: TextStyle(
                       color: AppColors.accentSecondary,
                       fontSize: 13,
@@ -186,20 +186,21 @@ class Sidebar extends StatelessWidget {
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
-                      'dev@flutter.io',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      'Pro Plan',
+                      'Powered by',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 11,
+                      ),
+                    ),
+                    Text(
+                      'Al-Najaf IT Solutions',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 12,
+                        fontFamily: 'roboto',
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
