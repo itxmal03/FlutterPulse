@@ -23,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
     NavItem(Icons.settings_rounded, 'Settings'),
   ];
 
-  final List<Widget> _screens = const [
+  final List<Widget> _screens = [
     PipelineDashboard(),
     BuildHistoryScreen(),
     PluginsScreen(),
@@ -33,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Row(
         children: [
           Sidebar(
@@ -45,8 +45,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Column(
               children: [
-                const TopBar(),
-                 Divider(height: 1, color: AppColors.border),
+                TopBar(),
+                Divider(height: 1, color: AppColors.border),
                 Expanded(child: _screens[_selectedNav]),
               ],
             ),
