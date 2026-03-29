@@ -3,7 +3,6 @@ import  'package:flutter_pulse/core/constants.dart';
 import  'package:flutter_pulse/ui/screens/home_screen.dart';
 import  'package:flutter_pulse/viewModels/theme_viewmodel.dart';
 import  'package:provider/provider.dart';
-
 void main() {
   runApp(
     MultiProvider(
@@ -52,25 +51,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-class my extends StatefulWidget {
-  const my({super.key});
-
-  @override
-  State<my> createState() => _myState();
-}
-
-class _myState extends State<my> {
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
-} 
-
-
-
-
-
-
-
-
-

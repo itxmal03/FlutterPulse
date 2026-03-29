@@ -11,3 +11,4 @@ class ThemeViewmodel extends ChangeNotifier {
     notifyListeners();
   }
 }
+

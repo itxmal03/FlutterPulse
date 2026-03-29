@@ -9,7 +9,7 @@ class AppColors {
   static Color get border => isDark ? const Color(0xFF252B3B) : const Color(0xFFD0D0D0);
   static Color get accent => const Color(0xFF4D9EFF);
   
-  static Color get accentGlow => const Color(0x334D9EFF);
+  static Color get accentGlow => const Color(0x334D9EFF); 
   static Color get accentSecondary => const Color(0xFF7C6EFF);
   static Color get textPrimary => isDark ? const Color(0xFFE2E8F4) : const Color(0xFF000000);
   static Color get textSecondary => isDark ? const Color(0xFF6B7A99) : const Color(0xFF555555);
