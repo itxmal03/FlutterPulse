@@ -12,9 +12,9 @@ class SdkInfoViewmodel extends ChangeNotifier {
 
   final _service = SdkService();
 
-  Future<bool> getSdkInfo() async {
+  Future<void> getSdkInfo() async {
     if (_isLoading) {
-      return false;
+      return ;
     }
     _isLoading = true;
     _error = null;
@@ -25,12 +25,12 @@ class SdkInfoViewmodel extends ChangeNotifier {
       _info = result.data!;
       _isLoading = false;
       notifyListeners();
-      return true;
+      return;
     }
 
     _isLoading = false;
     _error = result.error;
     notifyListeners();
-    return false;
+    return;
   }
 }

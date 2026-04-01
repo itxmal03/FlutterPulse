@@ -1,13 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pulse/core/constants.dart';
 import 'package:flutter_pulse/viewModels/pick_directory_viewmodel.dart';
+import 'package:flutter_pulse/viewModels/sdk_info_viewmodel.dart';
 import 'package:provider/provider.dart';
 
-class TopBar extends StatelessWidget {
+class TopBar extends StatefulWidget {
   const TopBar({super.key});
 
   @override
+  State<TopBar> createState() => _TopBarState();
+}
+
+class _TopBarState extends State<TopBar> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      context.read<SdkInfoViewmodel>().getSdkInfo();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final sdk = context.watch<SdkInfoViewmodel>();
+
     return Container(
       height: 52,
       color: AppColors.sidebar,
@@ -19,7 +36,7 @@ class TopBar extends StatelessWidget {
               showDialog(
                 context: ctx,
                 builder: (context) => AlertDialog(
-                  title: Text("Error"),
+                  title: const Text("Error"),
                   content: Text(val.error!),
                   actions: [
                     TextButton(
@@ -34,19 +51,22 @@ class TopBar extends StatelessWidget {
               );
             });
           }
+
           return Row(
             children: [
               if (val.isLoading)
-                SizedBox(
+                const SizedBox(
                   width: 15,
                   height: 15,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               else
                 InkWell(
-                  onTap: () async {
-                    await val.pickDirectory();
-                  },
+                  onTap: val.isLoading
+                      ? null
+                      : () async {
+                          await val.pickDirectory();
+                        },
                   child: Row(
                     children: [
                       val.path == null
@@ -61,47 +81,68 @@ class TopBar extends StatelessWidget {
                               size: 22,
                             ),
                       const SizedBox(width: 6),
-                      val.path == null
-                          ? Text(
-                              'Add Project',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 12.5,
-                                fontFamily: 'monospace',
-                              ),
-                            )
-                          : Text(
-                              val.path.toString(),
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 12.5,
-                                fontFamily: 'monospace',
-                              ),
-                            ),
+                      Text(
+                        val.path ?? 'Add Project',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12.5,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
                     ],
                   ),
                 ),
 
               const Spacer(),
-              _StatusChip(label: 'dart 3.3.0', icon: Icons.code_rounded),
+
+              sdk.isLoading
+                  ? const SizedBox(
+                      width: 15,
+                      height: 15,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : _StatusChip(
+                      label: sdk.error != null
+                          ? "Error"
+                          : sdk.info.length > 1
+                          ? "Dart ${sdk.info[1]}"
+                          : "Loading...",
+                      icon: Icons.code_rounded,
+                    ),
+
               const SizedBox(width: 8),
-              _StatusChip(
-                label: 'flutter 3.19.0',
-                icon: Icons.flutter_dash_rounded,
-                color: AppColors.accentSecondary,
-              ),
+
+              sdk.isLoading
+                  ? const SizedBox(
+                      width: 15,
+                      height: 15,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : _StatusChip(
+                      label: sdk.error != null
+                          ? "Error"
+                          : sdk.info.isNotEmpty
+                          ? "Flutter ${sdk.info[0]}"
+                          : "Loading...",
+                      icon: Icons.flutter_dash_rounded,
+                      color: AppColors.accentSecondary,
+                    ),
+
               const SizedBox(width: 8),
+
               Container(
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: AppColors.success,
+                  color: sdk.error != null ? Colors.red : AppColors.success,
                   shape: BoxShape.circle,
                 ),
               ),
+
               const SizedBox(width: 6),
+
               Text(
-                'SDK OK',
+                sdk.error != null ? 'SDK Error' : 'SDK OK',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               ),
             ],
@@ -122,6 +163,7 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chipColor = color ?? AppColors.accent;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
@@ -132,12 +174,12 @@ class _StatusChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
+          Icon(icon, size: 12, color: chipColor),
           const SizedBox(width: 5),
           Text(
             label,
             style: TextStyle(
-              color: color,
+              color: chipColor,
               fontSize: 11.5,
               fontFamily: 'monospace',
               fontWeight: FontWeight.w500,
