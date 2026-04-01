@@ -10,18 +10,28 @@ class PickDirectoryViewmodel extends ChangeNotifier {
   String? get path => _projectPath;
 
   Future<bool> pickDirectory() async {
+    if (_isLoading) return false;
+
     _error = null;
     _isLoading = true;
+    
+    notifyListeners();
 
     final result = await ProjectService.pickAndValidateProject();
     if (result.isSuccess) {
       _projectPath = result.data!.path;
+
       _isLoading = false;
       notifyListeners();
       return true;
     }
     _error = result.error;
+    _isLoading = false;
     notifyListeners();
     return false;
+  }
+
+  void clearError() {
+    _error = null;
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pulse/core/constants.dart';
+import 'package:flutter_pulse/viewModels/pick_directory_viewmodel.dart';
+import 'package:provider/provider.dart';
 
 class TopBar extends StatelessWidget {
   const TopBar({super.key});
@@ -10,45 +12,101 @@ class TopBar extends StatelessWidget {
       height: 52,
       color: AppColors.sidebar,
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: [
-          Row(
+      child: Consumer<PickDirectoryViewmodel>(
+        builder: (ctx, val, child) {
+          if (val.error != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              showDialog(
+                context: ctx,
+                builder: (context) => AlertDialog(
+                  title: Text("Error"),
+                  content: Text(val.error!),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        val.clearError();
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+            });
+          }
+          return Row(
             children: [
-              Icon(Icons.folder_rounded, color: AppColors.textMuted, size: 14),
-              const SizedBox(width: 6),
-              Text(
-                '/Users/dev/projects/my_flutter_app',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12.5,
-                  fontFamily: 'monospace',
+              if (val.isLoading)
+                SizedBox(
+                  width: 15,
+                  height: 15,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                InkWell(
+                  onTap: () async {
+                    await val.pickDirectory();
+                  },
+                  child: Row(
+                    children: [
+                      val.path == null
+                          ? Icon(
+                              Icons.add,
+                              color: AppColors.textMuted,
+                              size: 22,
+                            )
+                          : Icon(
+                              Icons.folder_rounded,
+                              color: AppColors.textSecondary,
+                              size: 22,
+                            ),
+                      const SizedBox(width: 6),
+                      val.path == null
+                          ? Text(
+                              'Add Project',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12.5,
+                                fontFamily: 'monospace',
+                              ),
+                            )
+                          : Text(
+                              val.path.toString(),
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12.5,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
+
+              const Spacer(),
+              _StatusChip(label: 'dart 3.3.0', icon: Icons.code_rounded),
+              const SizedBox(width: 8),
+              _StatusChip(
+                label: 'flutter 3.19.0',
+                icon: Icons.flutter_dash_rounded,
+                color: AppColors.accentSecondary,
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: AppColors.success,
+                  shape: BoxShape.circle,
                 ),
               ),
+              const SizedBox(width: 6),
+              Text(
+                'SDK OK',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              ),
             ],
-          ),
-          const Spacer(),
-          _StatusChip(label: 'dart 3.3.0', icon: Icons.code_rounded),
-          const SizedBox(width: 8),
-          _StatusChip(
-            label: 'flutter 3.19.0',
-            icon: Icons.flutter_dash_rounded,
-            color: AppColors.accentSecondary,
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: AppColors.success,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            'SDK OK',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
