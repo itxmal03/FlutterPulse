@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedNav = 0;
   final List<NavItem> _navItems = const [
-    NavItem(Icons.folder_open_rounded, 'Projects'),
+    NavItem(Icons.folder_open_rounded, 'Project'),
     NavItem(Icons.history_rounded, 'Build History'),
     NavItem(Icons.extension_rounded, 'Plugins'),
     NavItem(Icons.settings_rounded, 'Settings'),

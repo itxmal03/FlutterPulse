@@ -146,7 +146,7 @@ class Sidebar extends StatelessWidget {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
-                              '3',
+                              '',
                               style: TextStyle(
                                 color: AppColors.accent,
                                 fontSize: 11,
