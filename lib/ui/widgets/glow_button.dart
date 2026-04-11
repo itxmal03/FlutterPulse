@@ -23,7 +23,7 @@ class GlowButton extends StatelessWidget {
       duration: const Duration(milliseconds: 200),
       opacity: isDisabled ? 0.4 : 1.0,
       child: Material(
-        color: bgColor ?? color.withOpacity(0.15),
+        color: bgColor ?? color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
           onTap: onPressed,
@@ -31,13 +31,13 @@ class GlowButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
             decoration: BoxDecoration(
-              border: Border.all(color: color.withOpacity(0.4)),
+              border: Border.all(color: color.withValues(alpha:0.4)),
               borderRadius: BorderRadius.circular(8),
               boxShadow: isDisabled
                   ? null
                   : [
                       BoxShadow(
-                        color: color.withOpacity(0.2),
+                        color: color.withValues(alpha:0.2),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
                       ),

@@ -133,6 +133,7 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
         t.cancel();
         return;
       }
+      
       final stepLogs = _stepLogs[index];
       if (logIdx < stepLogs.length) {
         setState(() {
@@ -212,7 +213,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
     );
   }
 
-  // ── Controls Section ────────────────────────────────────────────────────────
 
   Widget _buildControlsSection() {
     return Container(
@@ -226,7 +226,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
         children: [
           Row(
             children: [
-              // Section title
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -250,7 +249,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                 ],
               ),
               const Spacer(),
-              // Run button
               GlowButton(
                 label: 'Run Pipeline',
                 icon: Icons.play_arrow_rounded,
@@ -258,7 +256,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                 onPressed: _isRunning ? null : _runPipeline,
               ),
               const SizedBox(width: 10),
-              // Stop button
               GlowButton(
                 label: 'Stop',
                 icon: Icons.stop_rounded,
@@ -269,7 +266,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
             ],
           ),
           const SizedBox(height: 20),
-          // Pipeline steps
           Row(
             children: List.generate(_steps.length * 2 - 1, (i) {
               if (i.isOdd) {
@@ -288,7 +284,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
     );
   }
 
-  // ── Progress Section ─────────────────────────────────────────────────────────
 
   Widget _buildProgressSection() {
     return Container(
