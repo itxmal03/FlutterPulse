@@ -12,17 +12,16 @@ class BuildService {
         echo ">>> Starting Flutter Build"
         echo "=============================="
         
-        echo "🔹 Cleaning project..."
-        
-        flutter clean
-        
-        echo "🔹 Getting dependencies..."
-        
-        flutter pub get
-        
-        echo "🔹 Building APK..."
-        
-        flutter build apk --release
+         echo "STEP:CLEAN"
+         flutter clean
+   
+         echo "STEP:GET"
+         flutter pub get
+   
+         echo "STEP:BUILD"
+         flutter build apk --release
+   
+         echo "BUILD:SUCCESS"
         
         echo "=============================="
         echo ">>>Build Completed Successfully"
@@ -34,4 +33,6 @@ class BuildService {
 
     return process;
   }
+
+  
 }

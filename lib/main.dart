@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_pulse/core/constants.dart';
 import 'package:flutter_pulse/ui/screens/home_screen.dart';
+import 'package:flutter_pulse/viewModels/build_viewmodel.dart';
 import 'package:flutter_pulse/viewModels/pick_directory_viewmodel.dart';
 import 'package:flutter_pulse/viewModels/sdk_info_viewmodel.dart';
 import 'package:flutter_pulse/viewModels/theme_viewmodel.dart';
+import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -12,7 +14,8 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (context) => ThemeViewmodel()),
         ChangeNotifierProvider(create: (context) => PickDirectoryViewmodel()),
-        ChangeNotifierProvider(create: (create)=>SdkInfoViewmodel())
+        ChangeNotifierProvider(create: (context) => SdkInfoViewmodel()),
+        ChangeNotifierProvider(create: (context) => BuildViewModel()),
       ],
       child: const MyApp(),
     ),

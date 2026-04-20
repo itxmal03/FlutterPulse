@@ -1,11 +1,11 @@
-import 'dart:async';
 import 'package:flutter/material.dart' hide StepState;
 import 'package:flutter_pulse/core/constants.dart';
-import 'package:flutter_pulse/models/log_entry_model.dart';
 import 'package:flutter_pulse/models/pipeline_step_model.dart';
 import 'package:flutter_pulse/ui/widgets/glow_button.dart';
 import 'package:flutter_pulse/ui/widgets/log_line.dart';
 import 'package:flutter_pulse/ui/widgets/pipeline/pipeline_step_chip.dart';
+import 'package:flutter_pulse/viewModels/build_viewmodel.dart';
+import 'package:provider/provider.dart';
 
 class PipelineDashboard extends StatefulWidget {
   const PipelineDashboard({super.key});
@@ -15,161 +15,7 @@ class PipelineDashboard extends StatefulWidget {
 }
 
 class _PipelineDashboardState extends State<PipelineDashboard> {
-  bool _isRunning = false;
-  int _currentStep = -1;
-  double _progress = 0.0;
-  Timer? _timer;
   final ScrollController _logScrollController = ScrollController();
-
-  final List<PipelineStep> _steps = [
-    PipelineStep('Clean', 'flutter clean'),
-    PipelineStep('Get', 'flutter pub get'),
-    PipelineStep('Analyze', 'flutter analyze'),
-    PipelineStep('Test', 'flutter test'),
-    PipelineStep('Build', 'flutter build apk'),
-  ];
-
-  final List<LogEntry> _logs = [
-    LogEntry('[INFO]    FlutterPulse CI — Build initiated', LogLevel.info),
-    LogEntry(
-      '[INFO]    Working directory: /Users/dev/projects/my_flutter_app',
-      LogLevel.info,
-    ),
-  ];
-
-  static final List<List<LogEntry>> _stepLogs = [
-    [
-      LogEntry('[INFO]    Running flutter clean...', LogLevel.info),
-      LogEntry('[SUCCESS] Deleted build/', LogLevel.success),
-      LogEntry('[SUCCESS] Deleted .dart_tool/', LogLevel.success),
-      LogEntry('[SUCCESS] flutter clean — completed in 0.8s', LogLevel.success),
-    ],
-    [
-      LogEntry('[INFO]    Running flutter pub get...', LogLevel.info),
-      LogEntry('[INFO]    Resolving dependencies...', LogLevel.info),
-      LogEntry(
-        '[WARNING] Package "http" has a newer version (1.2.1)',
-        LogLevel.warning,
-      ),
-      LogEntry('[SUCCESS] Got 47 packages in 2.3s', LogLevel.success),
-    ],
-    [
-      LogEntry('[INFO]    Running flutter analyze...', LogLevel.info),
-      LogEntry('[INFO]    Analyzing 134 Dart files...', LogLevel.info),
-      LogEntry(
-        '[WARNING] lib/ui/widgets/card.dart:42 — prefer_const_constructors',
-        LogLevel.warning,
-      ),
-      LogEntry('[SUCCESS] No critical issues found', LogLevel.success),
-    ],
-    [
-      LogEntry('[INFO]    Running flutter test...', LogLevel.info),
-      LogEntry('[INFO]    Loading test suite (18 tests)...', LogLevel.info),
-      LogEntry('[SUCCESS] ✓ widget_test.dart — 18/18 passed', LogLevel.success),
-      LogEntry('[SUCCESS] All tests passed in 4.1s', LogLevel.success),
-    ],
-    [
-      LogEntry(
-        '[INFO]    Running flutter build apk --release...',
-        LogLevel.info,
-      ),
-      LogEntry('[INFO]    Compiling Dart to native ARM64...', LogLevel.info),
-      LogEntry(
-        '[INFO]    Running Gradle task assembleRelease...',
-        LogLevel.info,
-      ),
-      LogEntry(
-        '[SUCCESS] ✓ Built build/app/outputs/flutter-apk/app-release.apk (18.2 MB)',
-        LogLevel.success,
-      ),
-    ],
-  ];
-
-  void _runPipeline() {
-    if (_isRunning) return;
-    setState(() {
-      _isRunning = true;
-      _currentStep = 0;
-      _progress = 0.0;
-      for (var s in _steps) {
-        s.state = StepState.pending;
-      }
-      _logs.add(LogEntry('', LogLevel.info));
-      _logs.add(
-        LogEntry(
-          '[INFO]    ─── Pipeline started ───────────────────',
-          LogLevel.info,
-        ),
-      );
-    });
-    _runStep(0);
-  }
-
-  void _runStep(int index) {
-    if (index >= _steps.length) {
-      setState(() {
-        _isRunning = false;
-        _currentStep = -1;
-        _progress = 1.0;
-        _logs.add(LogEntry('', LogLevel.info));
-        _logs.add(
-          LogEntry(
-            '[SUCCESS] ─── Pipeline completed successfully ───',
-            LogLevel.success,
-          ),
-        );
-      });
-      return;
-    }
-
-    setState(() {
-      _currentStep = index;
-      _steps[index].state = StepState.running;
-    });
-
-    int logIdx = 0;
-    _timer = Timer.periodic(const Duration(milliseconds: 520), (t) {
-      if (!_isRunning) {
-        t.cancel();
-        return;
-      }
-      
-      final stepLogs = _stepLogs[index];
-      if (logIdx < stepLogs.length) {
-        setState(() {
-          _logs.add(stepLogs[logIdx]);
-          _progress = (index + (logIdx + 1) / stepLogs.length) / _steps.length;
-        });
-        _scrollToBottom();
-        logIdx++;
-      } else {
-        t.cancel();
-        setState(() => _steps[index].state = StepState.done);
-        _timer = Timer(
-          const Duration(milliseconds: 300),
-          () => _runStep(index + 1),
-        );
-      }
-    });
-  }
-
-  void _stopPipeline() {
-    _timer?.cancel();
-    setState(() {
-      _isRunning = false;
-      if (_currentStep >= 0 && _currentStep < _steps.length) {
-        _steps[_currentStep].state = StepState.failed;
-      }
-      _logs.add(LogEntry('', LogLevel.info));
-      _logs.add(
-        LogEntry(
-          '[ERROR]   ─── Pipeline stopped by user ──────────',
-          LogLevel.error,
-        ),
-      );
-      _currentStep = -1;
-    });
-  }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -183,14 +29,21 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
     });
   }
 
-  String get _currentStepLabel {
-    if (!_isRunning || _currentStep < 0) return 'Idle — ready to build';
-    return _steps[_currentStep].command;
+  String _currentStepLabel(BuildContext context) {
+    final vm = context.watch<BuildViewModel>();
+
+    final runningStep = vm.pipelineSteps.firstWhere(
+      (s) => s.state == PipelineStepState.running,
+      orElse: () => vm.pipelineSteps.first,
+    );
+
+    if (!vm.isRunning) return 'Idle — ready to build';
+
+    return runningStep.command;
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
     _logScrollController.dispose();
     super.dispose();
   }
@@ -213,8 +66,8 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
     );
   }
 
-
   Widget _buildControlsSection() {
+    final vm = context.watch<BuildViewModel>();
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
       decoration: BoxDecoration(
@@ -253,7 +106,9 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                 label: 'Run Pipeline',
                 icon: Icons.play_arrow_rounded,
                 color: AppColors.accent,
-                onPressed: _isRunning ? null : _runPipeline,
+                onPressed: vm.isRunning
+                    ? null
+                    : () => vm.startBuild("your/project/path"),
               ),
               const SizedBox(width: 10),
               GlowButton(
@@ -261,22 +116,27 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                 icon: Icons.stop_rounded,
                 color: AppColors.stopBtn,
                 bgColor: AppColors.stopBtnBg,
-                onPressed: _isRunning ? _stopPipeline : null,
+                onPressed: vm.isRunning ? vm.stopBuild : null,
               ),
             ],
           ),
           const SizedBox(height: 20),
           Row(
-            children: List.generate(_steps.length * 2 - 1, (i) {
+            children: List.generate(vm.pipelineSteps.length * 2 - 1, (i) {
               if (i.isOdd) {
                 return _StepConnector(
                   done:
-                      _steps[i ~/ 2].state == StepState.done ||
-                      _steps[(i ~/ 2) + 1].state == StepState.done,
+                      vm.pipelineSteps[i ~/ 2].state ==
+                          PipelineStepState.done ||
+                      vm.pipelineSteps[(i ~/ 2) + 1].state ==
+                          PipelineStepState.done,
                 );
               }
               final stepIdx = i ~/ 2;
-              return PipelineStepChip(step: _steps[stepIdx], index: stepIdx);
+              return PipelineStepChip(
+                step: vm.pipelineSteps[stepIdx],
+                index: stepIdx,
+              );
             }),
           ),
         ],
@@ -284,8 +144,8 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
     );
   }
 
-
   Widget _buildProgressSection() {
+    final vm = context.watch<BuildViewModel>();
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
       decoration: BoxDecoration(
@@ -314,7 +174,7 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                       ),
                     ),
                     Text(
-                      _currentStepLabel,
+                      _currentStepLabel(context),
                       style: TextStyle(
                         color: AppColors.accent,
                         fontSize: 12.5,
@@ -324,7 +184,7 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                     ),
                     const Spacer(),
                     Text(
-                      '${(_progress * 100).toInt()}%',
+                      '${(vm.progress * 100).toInt()}%',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -337,13 +197,13 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
-                    value: _progress,
+                    value: vm.progress,
                     minHeight: 5,
                     backgroundColor: AppColors.border,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      _isRunning
+                      vm.isRunning
                           ? AppColors.accent
-                          : (_progress >= 1.0
+                          : (vm.progress >= 1.0
                                 ? AppColors.success
                                 : AppColors.textMuted),
                     ),
@@ -357,8 +217,9 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
     );
   }
 
-
   Widget _buildLogsSection() {
+    final vm = context.watch<BuildViewModel>();
+    _scrollToBottom();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -385,7 +246,7 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                 ),
               ),
               const SizedBox(width: 10),
-              if (_isRunning)
+              if (vm.isRunning)
                 Row(
                   children: [
                     Container(
@@ -410,13 +271,15 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                 ),
               const Spacer(),
               Text(
-                '${_logs.length} lines',
+                '${vm.logs.length} lines',
                 style: TextStyle(color: AppColors.textMuted, fontSize: 11.5),
               ),
               const SizedBox(width: 14),
               InkWell(
                 borderRadius: BorderRadius.circular(4),
-                onTap: () => setState(() => _logs.clear()),
+                onTap: () {
+                  vm.clearLogs();
+                },
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                   child: Text(
@@ -437,9 +300,9 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
             padding: const EdgeInsets.all(16),
             child: ListView.builder(
               controller: _logScrollController,
-              itemCount: _logs.length,
+              itemCount: vm.logs.length,
               itemBuilder: (ctx, i) =>
-                  LogLine(entry: _logs[i], lineNumber: i + 1),
+                  LogLine(entry: vm.logs[i], lineNumber: i + 1),
             ),
           ),
         ),

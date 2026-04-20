@@ -14,19 +14,19 @@ class PipelineStepChip extends StatelessWidget {
     IconData? icon;
 
     switch (step.state) {
-      case StepState.running:
+      case PipelineStepState.running:
         bg = AppColors.accentGlow;
         border = AppColors.accent;
         textColor = AppColors.accent;
         icon = null;
         break;
-      case StepState.done:
+      case PipelineStepState.done:
         bg = AppColors.success.withOpacity(0.12);
         border = AppColors.success.withOpacity(0.4);
         textColor = AppColors.success;
         icon = Icons.check_rounded;
         break;
-      case StepState.failed:
+      case PipelineStepState.failed:
         bg = AppColors.error.withOpacity(0.12);
         border = AppColors.error.withOpacity(0.4);
         textColor = AppColors.error;
@@ -50,13 +50,13 @@ class PipelineStepChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (step.state == StepState.running) ...[
+          if (step.state == PipelineStepState.running) ...[
             SizedBox(
               width: 12,
               height: 12,
               child: CircularProgressIndicator(
                 strokeWidth: 1.8,
-                valueColor:  AlwaysStoppedAnimation(AppColors.accent),
+                valueColor: AlwaysStoppedAnimation(AppColors.accent),
               ),
             ),
             const SizedBox(width: 7),
