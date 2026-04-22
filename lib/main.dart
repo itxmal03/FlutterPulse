@@ -5,7 +5,6 @@ import 'package:flutter_pulse/viewModels/build_viewmodel.dart';
 import 'package:flutter_pulse/viewModels/pick_directory_viewmodel.dart';
 import 'package:flutter_pulse/viewModels/sdk_info_viewmodel.dart';
 import 'package:flutter_pulse/viewModels/theme_viewmodel.dart';
-import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 
 void main() {
