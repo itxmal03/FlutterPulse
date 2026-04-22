@@ -7,45 +7,55 @@ import 'package:flutter_pulse/core/pipeline/plugin_registry.dart';
 import 'package:flutter_pulse/models/log_entry_model.dart';
 import 'package:flutter_pulse/models/pipeline_step_model.dart';
 import 'package:flutter_pulse/service/build_service.dart';
+import 'package:flutter_pulse/service/config_service.dart';
 
 class BuildViewModel extends ChangeNotifier {
   final _service = BuildService();
 
   Process? _process;
 
+  // base steps (always run)
   final List<PipelineStep> _baseSteps = [
     PipelineStep('Clean', 'flutter clean'),
     PipelineStep('Get', 'flutter pub get'),
     PipelineStep('Build', 'flutter build apk'),
   ];
 
+  // final pipeline (base + plugins)
   final List<PipelineStep> _pipelineSteps = [];
   List<PipelineStep> get pipelineSteps => _pipelineSteps;
 
   // progress
   int _completedSteps = 0;
   double _progress = 0.0;
-
   double get progress => _progress;
 
-  //running state control
+  // run state
   bool _isRunning = false;
   bool get isRunning => _isRunning;
 
   bool? _isSuccess;
   bool? get isSuccess => _isSuccess;
 
-  // handles logs
+  // logs
   final List<LogEntry> _logs = [];
   List<LogEntry> get logs => _logs;
 
-  //handles plugins
+  // plugins
   final Set<String> _enabledPlugins = {};
-
   Set<String> get enabledPlugins => _enabledPlugins;
 
+  // load config once (safe cache)
+  bool _configLoaded = false;
+  Map<String, dynamic> _config = {};
+  Map<String, dynamic> get config => _config;
+
+  BuildViewModel() {
+    // base pipeline init
+    _pipelineSteps.addAll(_baseSteps);
+  }
+
   void togglePlugin(String id) {
-    // Enable/disable plugin from UI
     if (_enabledPlugins.contains(id)) {
       _enabledPlugins.remove(id);
     } else {
@@ -54,33 +64,49 @@ class BuildViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  //build handler
+  // load config (ONLY ONCE)
+  Future<void> loadConfig() async {
+    if (_configLoaded) return;
+
+    _config = await ConfigService.loadConfig();
+
+    _enabledPlugins.clear();
+
+    for (final entry in _config.entries) {
+      if (entry.value == true) {
+        _enabledPlugins.add(entry.key);
+      }
+    }
+
+    _configLoaded = true;
+    notifyListeners();
+  }
+
+  // start build
   Future<void> startBuild(String projectPath) async {
     if (_isRunning) return;
 
+    await loadConfig(); // 🔥 FIX: ensure plugins loaded
+
     _resetState();
 
-    // build final pipeline (base + plugins + build step)
     _pipelineSteps
       ..clear()
       ..addAll(_buildPipelineSteps());
 
     notifyListeners();
 
-    _process = await _service.startBuild(projectPath);
+    _process = await _service.runSteps(_pipelineSteps, projectPath);
     final process = _process!;
 
-    // stdout logs :: normal output
     process.stdout.transform(utf8.decoder).listen(_handleLog);
 
-    // stderr logs :: errors
     process.stderr.transform(utf8.decoder).listen((data) {
       _addLog(data, LogLevel.error);
       _failCurrentStep();
       notifyListeners();
     });
 
-    // process exit
     process.exitCode.then((code) {
       if (_process == null) return;
 
@@ -96,7 +122,7 @@ class BuildViewModel extends ChangeNotifier {
     });
   }
 
-  // stop build hanlder
+  // stop build
   void stopBuild() {
     if (!_isRunning) return;
 
@@ -118,12 +144,10 @@ class BuildViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // pipeline builder :: core
+  // pipeline builder
   List<PipelineStep> _buildPipelineSteps() {
-    // base steps always run
     final steps = [..._baseSteps];
 
-    // inject plugin steps dynamically
     for (final id in _enabledPlugins) {
       final plugin = PluginRegistry.available[id];
       if (plugin != null) {
@@ -134,7 +158,7 @@ class BuildViewModel extends ChangeNotifier {
     return steps;
   }
 
-  // log handling engine
+  // log handler
   void _handleLog(String raw) {
     final lines = raw.split('\n');
 
@@ -143,25 +167,44 @@ class BuildViewModel extends ChangeNotifier {
 
       _logs.add(LogEntry(line, _detectLogLevel(line)));
 
-      // step tracking simple pattern matching
-      if (line.contains("STEP:CLEAN")) _setRunning(0);
-
-      if (line.contains("STEP:GET")) {
-        _complete(0);
-        _setRunning(1);
-      }
-
-      if (line.contains("STEP:BUILD")) {
-        _complete(1);
-        _setRunning(2);
-      }
-
-      if (line.contains("BUILD:SUCCESS")) {
-        _complete(2);
-      }
+      _trackStep(line);
     }
 
     notifyListeners();
+  }
+
+  // STEP TRACKER (SAFE + PLUGIN FRIENDLY)
+  void _trackStep(String line) {
+    final match = RegExp(r'STEP::(\w+)::(\w+)').firstMatch(line);
+    if (match == null) return;
+
+    final name = match.group(1)!;
+    final status = match.group(2)!;
+
+    final step = _findStep(name);
+    if (step == null) return;
+
+    if (status == "start") {
+      step.state = PipelineStepState.running;
+    }
+
+    if (status == "done") {
+      if (step.state != PipelineStepState.done) {
+        step.state = PipelineStepState.done;
+        _completedSteps++;
+        _updateProgress();
+      }
+    }
+  }
+
+  // SAFE FINDER (FIXED CRASH ISSUE)
+  PipelineStep? _findStep(String name) {
+    for (final s in _pipelineSteps) {
+      if (s.label.toLowerCase() == name.toLowerCase()) {
+        return s;
+      }
+    }
+    return null;
   }
 
   void _addLog(String raw, LogLevel level) {
@@ -172,29 +215,10 @@ class BuildViewModel extends ChangeNotifier {
   }
 
   LogLevel _detectLogLevel(String line) {
-    if (line.contains("ERROR")) {
-      return LogLevel.error;
-    }
-    if (line.contains("SUCCESS")) {
-      return LogLevel.success;
-    }
-    if (line.contains("WARNING")) {
-      return LogLevel.warning;
-    }
+    if (line.contains("ERROR")) return LogLevel.error;
+    if (line.contains("SUCCESS")) return LogLevel.success;
+    if (line.contains("WARNING")) return LogLevel.warning;
     return LogLevel.info;
-  }
-
-  //step control
-  void _setRunning(int index) {
-    _pipelineSteps[index].state = PipelineStepState.running;
-  }
-
-  void _complete(int index) {
-    if (_pipelineSteps[index].state != PipelineStepState.done) {
-      _pipelineSteps[index].state = PipelineStepState.done;
-      _completedSteps++;
-      _updateProgress();
-    }
   }
 
   void _failCurrentStep() {
@@ -202,17 +226,21 @@ class BuildViewModel extends ChangeNotifier {
       (s) => s.state == PipelineStepState.running,
     );
 
-    if (i != -1) {
-      _pipelineSteps[i].state = PipelineStepState.failed;
-      _updateProgress();
-    }
+    if (i == -1) return;
+
+    _pipelineSteps[i].state = PipelineStepState.failed;
+    _updateProgress();
   }
 
   void _updateProgress() {
+    if (_pipelineSteps.isEmpty) {
+      _progress = 0;
+      return;
+    }
+
     _progress = (_completedSteps / _pipelineSteps.length).clamp(0.0, 1.0);
   }
 
-  // reset state
   void _resetState() {
     _isRunning = true;
     _logs.clear();

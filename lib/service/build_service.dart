@@ -1,38 +1,34 @@
 import 'dart:io';
+import 'package:flutter_pulse/models/pipeline_step_model.dart';
 
 class BuildService {
-  Future<Process> startBuild(String projectPath) async {
+  Future<Process> runSteps(List<PipelineStep> steps, String projectPath) async {
+    final buffer = StringBuffer();
+
+    // safety mode :: stop on error
+    buffer.writeln("set -e");
+
+    buffer.writeln('echo "______________________________"');
+    buffer.writeln('echo ">>> FlowForge Build Started"');
+    buffer.writeln('echo "______________________________"');
+    buffer.writeln("");
+
+    // build dynamic pipeline from steps
+    for (final step in steps) {
+      buffer.writeln('echo "STEP:${step.label.toUpperCase()}"');
+      buffer.writeln(step.command);
+      buffer.writeln("");
+    }
+
+    buffer.writeln('echo "BUILD:SUCCESS"');
+
     final process = await Process.start(
       'bash',
-      [
-        '''
-        set -e
-   
-        echo "=============================="
-        echo ">>> Starting Flutter Build"
-        echo "=============================="
-        
-         echo "STEP:CLEAN"
-         flutter clean
-   
-         echo "STEP:GET"
-         flutter pub get
-   
-         echo "STEP:BUILD"
-         flutter build apk --release
-   
-         echo "BUILD:SUCCESS"
-        
-        echo "=============================="
-        echo ">>>Build Completed Successfully"
-        echo "=============================="   ''',
-      ],
+      ['-c', buffer.toString()],
       workingDirectory: projectPath,
       runInShell: true,
     );
 
     return process;
   }
-
-  
 }
