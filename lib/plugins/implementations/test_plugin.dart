@@ -1,7 +1,7 @@
 import 'package:flutter_pulse/models/pipeline_step_model.dart';
 import 'package:flutter_pulse/plugins/pipeline_plugin/pipeline_plugin.dart';
 
-class TestPlugin implements PipelinePlugin {
+class TestPlugin implements PipelinePlugin { 
   @override
   String get id => "test";
 
