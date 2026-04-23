@@ -1,8 +1,11 @@
 import 'package:flutter_pulse/models/pipeline_step_model.dart';
 
 abstract class PipelinePlugin {
-  String get id;     // unique key (e.g. "test")
-  String get name;   // shown in UI
+  String get id;
+  String get name;
+  String get description;
+  String get version;
+  String get author;
 
   List<PipelineStep> buildSteps();
 }
