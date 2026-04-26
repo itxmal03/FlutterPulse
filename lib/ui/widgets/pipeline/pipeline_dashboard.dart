@@ -67,7 +67,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
 
   Widget _buildControlsSection() {
     final vm = context.watch<BuildViewModel>();
-    // FIX: read the actual project path from PickDirectoryViewModel
     final dirVm = context.watch<PickDirectoryViewmodel>();
     final projectPath = dirVm.path;
 
@@ -95,7 +94,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    // FIX: show actual project path or prompt user to pick one
                     projectPath != null
                         ? projectPath.split('/').last
                         : 'No project selected',
@@ -110,15 +108,25 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
               ),
               const Spacer(),
 
-              GlowButton(
-                label: 'Run Pipeline',
-                icon: Icons.play_arrow_rounded,
-                color: AppColors.accent,
-                // FIX: disable Run if no project path selected OR already running
-                onPressed: vm.isRunning || projectPath == null
-                    ? null
-                    : () => vm.startBuild(projectPath),
-              ),
+              // Run button — hidden while build is finished (Reset takes its place)
+              if (!vm.isFinished)
+                GlowButton(
+                  label: 'Run Pipeline',
+                  icon: Icons.play_arrow_rounded,
+                  color: AppColors.accent,
+                  onPressed: vm.isRunning || projectPath == null
+                      ? null
+                      : () => vm.startBuild(projectPath),
+                ),
+
+              // Reset button — appears only after build finishes (success or failure)
+              if (vm.isFinished)
+                GlowButton(
+                  label: 'Reset',
+                  icon: Icons.refresh_rounded,
+                  color: AppColors.textSecondary,
+                  onPressed: vm.resetBuild,
+                ),
 
               const SizedBox(width: 10),
 
@@ -134,15 +142,16 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
 
           const SizedBox(height: 20),
 
+          // Step chips
           if (vm.pipelineSteps.isNotEmpty)
             Row(
               children: List.generate(vm.pipelineSteps.length * 2 - 1, (i) {
                 if (i.isOdd) {
                   final left = i ~/ 2;
                   final right = left + 1;
-                  final done = right < vm.pipelineSteps.length &&
-                      (vm.pipelineSteps[left].state ==
-                              PipelineStepState.done ||
+                  final done =
+                      right < vm.pipelineSteps.length &&
+                      (vm.pipelineSteps[left].state == PipelineStepState.done ||
                           vm.pipelineSteps[right].state ==
                               PipelineStepState.done);
                   return _StepConnector(done: done);
@@ -155,20 +164,25 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
               }),
             ),
 
-          // FIX: show a hint when no project is selected so user knows what to do
+          // Result banner — shown after build finishes
+          if (vm.isFinished) ...[
+            const SizedBox(height: 14),
+            _BuildResultBanner(success: vm.isSuccess == true),
+          ],
+
           if (projectPath == null) ...[
             const SizedBox(height: 12),
             Row(
               children: [
-                Icon(Icons.info_outline_rounded,
-                    size: 13, color: AppColors.textMuted),
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 13,
+                  color: AppColors.textMuted,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'Select a project folder from the top bar to run the pipeline.',
-                  style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 12),
                 ),
               ],
             ),
@@ -241,9 +255,11 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                     valueColor: AlwaysStoppedAnimation<Color>(
                       vm.isRunning
                           ? AppColors.accent
-                          : (vm.progress >= 1.0
-                              ? AppColors.success
-                              : AppColors.textMuted),
+                          : vm.isSuccess == true
+                          ? AppColors.success
+                          : vm.isSuccess == false
+                          ? Colors.red.withValues(alpha: 0.8)
+                          : AppColors.textMuted,
                     ),
                   ),
                 ),
@@ -301,7 +317,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
             ],
           ),
         ),
-
         Expanded(
           child: Container(
             color: const Color(0xFF090B0F),
@@ -325,6 +340,50 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// Banner shown below step chips after build completes
+class _BuildResultBanner extends StatelessWidget {
+  final bool success;
+  const _BuildResultBanner({required this.success});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = success ? AppColors.success : Colors.red;
+    final icon = success ? Icons.check_circle_rounded : Icons.cancel_rounded;
+    final label = success ? 'Build completed successfully' : 'Build failed';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            'Press Reset to run again',
+            style: TextStyle(
+              color: color.withValues(alpha: 0.6),
+              fontSize: 11.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

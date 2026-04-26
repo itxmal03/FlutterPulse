@@ -33,6 +33,9 @@ class BuildViewModel extends ChangeNotifier {
   bool? _isSuccess;
   bool? get isSuccess => _isSuccess;
 
+  // True when build has finished (success or failure) — drives Reset button visibility
+  bool get isFinished => !_isRunning && _isSuccess != null;
+
   final List<LogEntry> _logs = [];
   List<LogEntry> get logs => _logs;
 
@@ -98,11 +101,6 @@ class BuildViewModel extends ChangeNotifier {
     _process = await _service.runSteps(_pipelineSteps, projectPath);
     final process = _process!;
 
-    // FIX: stream callbacks from Process.start fire on the main isolate in Flutter
-    // so plain notifyListeners() is safe — no SchedulerBinding needed.
-    // _safeNotify() was using addPostFrameCallback which deduplicates rapid calls
-    // and was silently dropping most of the notify calls from the stream.
-
     process.stdout
         .transform(utf8.decoder)
         .transform(const LineSplitter())
@@ -110,7 +108,7 @@ class BuildViewModel extends ChangeNotifier {
           if (line.trim().isEmpty) return;
           _logs.add(LogEntry(line, _detectLogLevel(line)));
           _trackStep(line);
-          notifyListeners(); // direct call — safe, fires immediately
+          notifyListeners();
         });
 
     process.stderr
@@ -119,7 +117,7 @@ class BuildViewModel extends ChangeNotifier {
         .listen((line) {
           if (line.trim().isEmpty) return;
           _logs.add(LogEntry(line, _detectLogLevel(line)));
-          notifyListeners(); // direct call — safe, fires immediately
+          notifyListeners();
         });
 
     process.exitCode.then((code) {
@@ -142,6 +140,7 @@ class BuildViewModel extends ChangeNotifier {
     _process?.kill();
     _process = null;
     _isRunning = false;
+    _isSuccess = false;
 
     final i = _pipelineSteps.indexWhere(
       (s) => s.state == PipelineStepState.running,
@@ -151,6 +150,28 @@ class BuildViewModel extends ChangeNotifier {
     }
 
     _logs.add(LogEntry('>>> BUILD STOPPED BY USER', LogLevel.error));
+    notifyListeners();
+  }
+
+  // Resets everything back to initial idle state — called by Reset button in UI
+  void resetBuild() {
+    _process?.kill();
+    _process = null;
+    _isRunning = false;
+    _isSuccess = null;
+    _completedSteps = 0;
+    _progress = 0.0;
+    _logs.clear();
+
+    // Reset steps back to base list with pending state
+    _pipelineSteps
+      ..clear()
+      ..addAll(_baseSteps);
+
+    for (final step in _pipelineSteps) {
+      step.state = PipelineStepState.pending;
+    }
+
     notifyListeners();
   }
 
@@ -205,9 +226,8 @@ class BuildViewModel extends ChangeNotifier {
     if (l.contains('BUILD::SUCCESS')) return LogLevel.success;
     if (l.startsWith('ERROR:') ||
         l.contains('EXCEPTION') ||
-        l.contains('FATAL')) {
+        l.contains('FATAL'))
       return LogLevel.error;
-    }
     if (l.contains('WARNING:') || l.contains('WARN:')) return LogLevel.warning;
     if (l.contains('SUCCESS') || l.contains('::DONE')) return LogLevel.success;
     return LogLevel.info;
