@@ -13,7 +13,7 @@ class PickDirectoryViewmodel extends ChangeNotifier {
     if (_isLoading) return false;
 
     _error = null;
-    _isLoading = true;
+    _isLoading = true; 
     
     notifyListeners();
 

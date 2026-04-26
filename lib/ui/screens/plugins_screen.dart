@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_pulse/core/pipeline/plugin_registry.dart';
+import 'package:flutter_pulse/plugins/pipeline_plugin/pipeline_plugin.dart';
 import 'package:flutter_pulse/viewModels/build_viewmodel.dart';
 import 'package:provider/provider.dart';
 
@@ -11,116 +13,130 @@ class PluginsScreen extends StatefulWidget {
 
 class _PluginsScreenState extends State<PluginsScreen> {
   @override
+  void initState() {
+    super.initState();
+    // Load config to seed which plugins are enabled — runs only once
+    Future.microtask(() async {
+      if (!mounted) return;
+      await context.read<BuildViewModel>().loadConfig();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final vm = context.watch<BuildViewModel>();
 
+    // FIX: read plugin list from PluginRegistry — NOT from config.json
+    // config.json only controls the enabled/disabled toggle state
+    final plugins = PluginRegistry.all;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0B0D10),
-
-      // HEADER
       appBar: AppBar(
-        title: const Text("Plugins"),
+        title: const Text('Plugins'),
         backgroundColor: const Color(0xFF12151A),
       ),
-
-      // BODY
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-
-        children: [
-          const Text(
-            "Available Plugins",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // FIX: simple plugin list (you can later make registry-driven UI)
-          _pluginTile(
-            vm: vm,
-            id: "test",
-            title: "Test Plugin",
-            subtitle: "Runs test steps before build",
-          ),
-
-          // add more plugins here later
-        ],
-      ),
+      body: _buildBody(vm, plugins),
     );
   }
 
-  // SINGLE PLUGIN TILE
+  Widget _buildBody(BuildViewModel vm, List<PipelinePlugin> plugins) {
+    // Show spinner only while config is being loaded
+    if (vm.isConfigLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (plugins.isEmpty) {
+      return const Center(
+        child: Text(
+          'No plugins registered.\nAdd plugins to PluginRegistry.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey, fontSize: 14),
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Available Plugins',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 20),
+        // FIX: iterate PluginRegistry.all — each plugin has id, name, description etc.
+        ...plugins.map((plugin) => _pluginTile(vm: vm, plugin: plugin)),
+      ],
+    );
+  }
+
   Widget _pluginTile({
     required BuildViewModel vm,
-    required String id,
-    required String title,
-    required String subtitle,
+    required PipelinePlugin plugin,
   }) {
-    final enabled = vm.enabledPlugins.contains(id);
+    final isEnabled = vm.enabledPlugins.contains(plugin.id);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-
       padding: const EdgeInsets.all(14),
-
       decoration: BoxDecoration(
         color: const Color(0xFF151922),
         borderRadius: BorderRadius.circular(10),
       ),
-
       child: Row(
         children: [
-          // ICON
+          // Icon
           Container(
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: enabled
+              color: isEnabled
                   ? Colors.green.withOpacity(0.2)
                   : Colors.grey.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               Icons.extension,
-              color: enabled ? Colors.green : Colors.grey,
+              color: isEnabled ? Colors.green : Colors.grey,
             ),
           ),
 
           const SizedBox(width: 12),
 
-          // TEXT
+          // Plugin info — from PipelinePlugin fields (name, description, version, author)
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  plugin.name,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
-                  subtitle,
+                  plugin.description,
                   style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'v${plugin.version} · ${plugin.author}',
+                  style: const TextStyle(color: Color(0xFF555E6E), fontSize: 11),
                 ),
               ],
             ),
           ),
 
-          // TOGGLE SWITCH
+          // Toggle — reads from vm.enabledPlugins (live set)
           Switch(
-            value: enabled,
-
-            onChanged: (val) {
-              // CORE LOGIC: enable/disable plugin
-              vm.togglePlugin(id);
-            },
+            value: isEnabled,
+            onChanged: (_) => vm.togglePlugin(plugin.id),
           ),
         ],
       ),

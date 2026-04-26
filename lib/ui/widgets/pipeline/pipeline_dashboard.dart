@@ -5,6 +5,7 @@ import 'package:flutter_pulse/ui/widgets/glow_button.dart';
 import 'package:flutter_pulse/ui/widgets/log_line.dart';
 import 'package:flutter_pulse/ui/widgets/pipeline/pipeline_step_chip.dart';
 import 'package:flutter_pulse/viewModels/build_viewmodel.dart';
+import 'package:flutter_pulse/viewModels/pick_directory_viewmodel.dart';
 import 'package:provider/provider.dart';
 
 class PipelineDashboard extends StatefulWidget {
@@ -16,8 +17,11 @@ class PipelineDashboard extends StatefulWidget {
 
 class _PipelineDashboardState extends State<PipelineDashboard> {
   final ScrollController _logScrollController = ScrollController();
+  int _lastLogCount = 0;
 
-  void _scrollToBottom() {
+  void _scrollToBottomIfNeeded(int currentCount) {
+    if (currentCount <= _lastLogCount) return;
+    _lastLogCount = currentCount;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_logScrollController.hasClients) {
         _logScrollController.animateTo(
@@ -29,20 +33,15 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
     });
   }
 
-  // FIX: safe current step label (no empty list crash)
-  String _currentStepLabel(BuildContext context) {
-    final vm = context.watch<BuildViewModel>();
-
+  String _currentStepLabel(BuildViewModel vm) {
     if (!vm.isRunning || vm.pipelineSteps.isEmpty) {
       return 'Idle — ready to build';
     }
-
-    final runningStep = vm.pipelineSteps.firstWhere(
+    final running = vm.pipelineSteps.firstWhere(
       (s) => s.state == PipelineStepState.running,
       orElse: () => vm.pipelineSteps.first,
     );
-
-    return runningStep.command;
+    return running.command;
   }
 
   @override
@@ -68,6 +67,9 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
 
   Widget _buildControlsSection() {
     final vm = context.watch<BuildViewModel>();
+    // FIX: read the actual project path from PickDirectoryViewModel
+    final dirVm = context.watch<PickDirectoryViewmodel>();
+    final projectPath = dirVm.path;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
@@ -93,9 +95,14 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'my_flutter_app • main branch',
+                    // FIX: show actual project path or prompt user to pick one
+                    projectPath != null
+                        ? projectPath.split('/').last
+                        : 'No project selected',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: projectPath != null
+                          ? AppColors.textSecondary
+                          : AppColors.textMuted,
                       fontSize: 12,
                     ),
                   ),
@@ -107,9 +114,10 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                 label: 'Run Pipeline',
                 icon: Icons.play_arrow_rounded,
                 color: AppColors.accent,
-                onPressed: vm.isRunning
+                // FIX: disable Run if no project path selected OR already running
+                onPressed: vm.isRunning || projectPath == null
                     ? null
-                    : () => vm.startBuild("your/project/path"),
+                    : () => vm.startBuild(projectPath),
               ),
 
               const SizedBox(width: 10),
@@ -126,34 +134,45 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
 
           const SizedBox(height: 20),
 
-          // FIX: prevent crash when pipeline is empty
-          if (vm.pipelineSteps.isEmpty)
-            const SizedBox()
-          else
+          if (vm.pipelineSteps.isNotEmpty)
             Row(
               children: List.generate(vm.pipelineSteps.length * 2 - 1, (i) {
-                // FIX: connector safety check
                 if (i.isOdd) {
                   final left = i ~/ 2;
                   final right = left + 1;
-
-                  final done =
-                      right < vm.pipelineSteps.length &&
-                      (vm.pipelineSteps[left].state == PipelineStepState.done ||
+                  final done = right < vm.pipelineSteps.length &&
+                      (vm.pipelineSteps[left].state ==
+                              PipelineStepState.done ||
                           vm.pipelineSteps[right].state ==
                               PipelineStepState.done);
-
                   return _StepConnector(done: done);
                 }
-
                 final stepIdx = i ~/ 2;
-
                 return PipelineStepChip(
                   step: vm.pipelineSteps[stepIdx],
                   index: stepIdx,
                 );
               }),
             ),
+
+          // FIX: show a hint when no project is selected so user knows what to do
+          if (projectPath == null) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.info_outline_rounded,
+                    size: 13, color: AppColors.textMuted),
+                const SizedBox(width: 6),
+                Text(
+                  'Select a project folder from the top bar to run the pipeline.',
+                  style: TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -182,7 +201,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                       color: AppColors.textSecondary,
                     ),
                     const SizedBox(width: 6),
-
                     Text(
                       'Current Step: ',
                       style: TextStyle(
@@ -190,19 +208,19 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                         fontSize: 12.5,
                       ),
                     ),
-
-                    Text(
-                      _currentStepLabel(context),
-                      style: TextStyle(
-                        color: AppColors.accent,
-                        fontSize: 12.5,
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: Text(
+                        _currentStepLabel(vm),
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.accent,
+                          fontSize: 12.5,
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-
-                    const Spacer(),
-
+                    const SizedBox(width: 8),
                     Text(
                       '${(vm.progress * 100).toInt()}%',
                       style: TextStyle(
@@ -213,9 +231,7 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 8),
-
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
@@ -226,8 +242,8 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                       vm.isRunning
                           ? AppColors.accent
                           : (vm.progress >= 1.0
-                                ? AppColors.success
-                                : AppColors.textMuted),
+                              ? AppColors.success
+                              : AppColors.textMuted),
                     ),
                   ),
                 ),
@@ -241,11 +257,7 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
 
   Widget _buildLogsSection() {
     final vm = context.watch<BuildViewModel>();
-
-    // FIX: auto scroll safely
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
-    });
+    _scrollToBottomIfNeeded(vm.logs.length);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -263,9 +275,7 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                 size: 14,
                 color: AppColors.textSecondary,
               ),
-
               const SizedBox(width: 7),
-
               Text(
                 'Live Console',
                 style: TextStyle(
@@ -274,16 +284,12 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-
               const Spacer(),
-
               Text(
                 '${vm.logs.length} lines',
                 style: TextStyle(color: AppColors.textMuted, fontSize: 11.5),
               ),
-
               const SizedBox(width: 14),
-
               InkWell(
                 borderRadius: BorderRadius.circular(4),
                 onTap: vm.clearLogs,
@@ -300,12 +306,22 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
           child: Container(
             color: const Color(0xFF090B0F),
             padding: const EdgeInsets.all(16),
-            child: ListView.builder(
-              controller: _logScrollController,
-              itemCount: vm.logs.length,
-              itemBuilder: (ctx, i) =>
-                  LogLine(entry: vm.logs[i], lineNumber: i + 1),
-            ),
+            child: vm.logs.isEmpty
+                ? Center(
+                    child: Text(
+                      'No logs yet — press Run Pipeline to start.',
+                      style: TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 13,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    controller: _logScrollController,
+                    itemCount: vm.logs.length,
+                    itemBuilder: (ctx, i) =>
+                        LogLine(entry: vm.logs[i], lineNumber: i + 1),
+                  ),
           ),
         ),
       ],
