@@ -1,13 +1,11 @@
 import 'dart:io';
+
 import 'package:flutter_pulse/models/pipeline_step_model.dart';
 
 class BuildService {
-  // Exact paths from the host system — no PATH lookup needed
   static const String _bash = '/usr/bin/bash';
   static const String _flutter =
       '/home/itxmal03/development/flutter/bin/flutter';
-
-  // Full PATH from the host system so child processes can find android tools etc.
   static const String _path =
       '/home/itxmal03/Android/Sdk/cmdline-tools/latest/bin'
       ':/home/itxmal03/Android/Sdk/platform-tools'
@@ -26,7 +24,7 @@ class BuildService {
     buffer.writeln('');
 
     for (final step in steps) {
-      // Replace 'flutter' in the command with the absolute path
+      // Replace 'flutter' with absolute path so it works without login shell
       final cmd = step.command.replaceFirst('flutter', _flutter);
 
       buffer.writeln('echo "STEP::${step.label}::start"');

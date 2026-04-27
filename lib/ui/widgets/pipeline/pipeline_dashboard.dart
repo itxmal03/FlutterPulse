@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart' hide StepState;
 import 'package:flutter_pulse/core/constants.dart';
+import 'package:flutter_pulse/models/build_target.dart';
 import 'package:flutter_pulse/models/pipeline_step_model.dart';
 import 'package:flutter_pulse/ui/widgets/glow_button.dart';
 import 'package:flutter_pulse/ui/widgets/log_line.dart';
@@ -34,9 +35,8 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
   }
 
   String _currentStepLabel(BuildViewModel vm) {
-    if (!vm.isRunning || vm.pipelineSteps.isEmpty) {
+    if (!vm.isRunning || vm.pipelineSteps.isEmpty)
       return 'Idle — ready to build';
-    }
     final running = vm.pipelineSteps.firstWhere(
       (s) => s.state == PipelineStepState.running,
       orElse: () => vm.pipelineSteps.first,
@@ -81,6 +81,7 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
         children: [
           Row(
             children: [
+              // Project name + target selector
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -106,9 +107,18 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                   ),
                 ],
               ),
+
+              const SizedBox(width: 24),
+
+              // Build target dropdown
+              _TargetDropdown(
+                selected: vm.selectedTarget,
+                enabled: !vm.isRunning,
+                onChanged: vm.setTarget,
+              ),
+
               const Spacer(),
 
-              // Run button — hidden while build is finished (Reset takes its place)
               if (!vm.isFinished)
                 GlowButton(
                   label: 'Run Pipeline',
@@ -119,7 +129,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
                       : () => vm.startBuild(projectPath),
                 ),
 
-              // Reset button — appears only after build finishes (success or failure)
               if (vm.isFinished)
                 GlowButton(
                   label: 'Reset',
@@ -142,7 +151,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
 
           const SizedBox(height: 20),
 
-          // Step chips
           if (vm.pipelineSteps.isNotEmpty)
             Row(
               children: List.generate(vm.pipelineSteps.length * 2 - 1, (i) {
@@ -164,7 +172,6 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
               }),
             ),
 
-          // Result banner — shown after build finishes
           if (vm.isFinished) ...[
             const SizedBox(height: 14),
             _BuildResultBanner(success: vm.isSuccess == true),
@@ -344,7 +351,87 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
   }
 }
 
-// Banner shown below step chips after build completes
+// ── Build target dropdown ─────────────────────────────────────────────────────
+
+class _TargetDropdown extends StatelessWidget {
+  final BuildTarget selected;
+  final bool enabled;
+  final ValueChanged<BuildTarget> onChanged;
+
+  const _TargetDropdown({
+    required this.selected,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.45,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<BuildTarget>(
+            value: selected,
+            isDense: true,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12.5,
+              fontFamily: 'monospace',
+            ),
+            dropdownColor: AppColors.surface,
+            icon: Icon(
+              Icons.expand_more_rounded,
+              size: 16,
+              color: AppColors.textMuted,
+            ),
+            items: BuildTarget.values.map((t) {
+              return DropdownMenuItem(
+                value: t,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(_targetIcon(t), size: 14, color: AppColors.accent),
+                    const SizedBox(width: 7),
+                    Text(t.label),
+                  ],
+                ),
+              );
+            }).toList(),
+            onChanged: enabled
+                ? (t) {
+                    if (t != null) onChanged(t);
+                  }
+                : null,
+          ),
+        ),
+      ),
+    );
+  }
+
+  IconData _targetIcon(BuildTarget t) {
+    switch (t) {
+      case BuildTarget.apk:
+        return Icons.android_rounded;
+      case BuildTarget.linux:
+        return Icons.computer_rounded;
+      case BuildTarget.web:
+        return Icons.language_rounded;
+      case BuildTarget.windows:
+        return Icons.window_rounded;
+      case BuildTarget.deb:
+        return Icons.archive_rounded;
+    }
+  }
+}
+
+// ── Result banner ─────────────────────────────────────────────────────────────
+
 class _BuildResultBanner extends StatelessWidget {
   final bool success;
   const _BuildResultBanner({required this.success});
@@ -387,6 +474,8 @@ class _BuildResultBanner extends StatelessWidget {
     );
   }
 }
+
+// ── Step connector ────────────────────────────────────────────────────────────
 
 class _StepConnector extends StatelessWidget {
   final bool done;

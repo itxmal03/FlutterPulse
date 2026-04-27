@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_pulse/core/constants.dart';
 import 'package:flutter_pulse/ui/screens/home_screen.dart';
 import 'package:flutter_pulse/viewModels/build_viewmodel.dart';
+import 'package:flutter_pulse/viewModels/history_viewmodel.dart';
 import 'package:flutter_pulse/viewModels/pick_directory_viewmodel.dart';
 import 'package:flutter_pulse/viewModels/sdk_info_viewmodel.dart';
 import 'package:flutter_pulse/viewModels/theme_viewmodel.dart';
@@ -11,10 +12,18 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => ThemeViewmodel()),
-        ChangeNotifierProvider(create: (context) => PickDirectoryViewmodel()),
-        ChangeNotifierProvider(create: (context) => SdkInfoViewmodel()),
-        ChangeNotifierProvider(create: (context) => BuildViewModel()),
+        ChangeNotifierProvider(create: (_) => ThemeViewmodel()),
+        ChangeNotifierProvider(create: (_) => PickDirectoryViewmodel()),
+        ChangeNotifierProvider(create: (_) => SdkInfoViewmodel()),
+        // HistoryViewModel must be created before BuildViewModel
+        // because BuildViewModel holds a reference to it
+        ChangeNotifierProvider(create: (_) => HistoryViewModel()),
+        ChangeNotifierProxyProvider<HistoryViewModel, BuildViewModel>(
+          create: (ctx) =>
+              BuildViewModel(historyViewModel: ctx.read<HistoryViewModel>()),
+          update: (ctx, historyVm, previous) =>
+              previous ?? BuildViewModel(historyViewModel: historyVm),
+        ),
       ],
       child: const MyApp(),
     ),

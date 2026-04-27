@@ -4,20 +4,40 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_pulse/core/pipeline/plugin_registry.dart';
+import 'package:flutter_pulse/models/build_history_model.dart';
+import 'package:flutter_pulse/models/build_target.dart';
 import 'package:flutter_pulse/models/log_entry_model.dart';
 import 'package:flutter_pulse/models/pipeline_step_model.dart';
 import 'package:flutter_pulse/service/build_service.dart';
 import 'package:flutter_pulse/service/config_service.dart';
+import 'package:flutter_pulse/viewModels/history_viewmodel.dart';
 
 class BuildViewModel extends ChangeNotifier {
   final _service = BuildService();
 
-  Process? _process;
+  // HistoryViewModel reference — injected so we can push records after build
+  final HistoryViewModel historyViewModel;
 
+  BuildViewModel({required this.historyViewModel});
+
+  Process? _process;
+  DateTime? _buildStartTime;
+
+  // Selected build target — default APK
+  BuildTarget _selectedTarget = BuildTarget.apk;
+  BuildTarget get selectedTarget => _selectedTarget;
+
+  void setTarget(BuildTarget target) {
+    if (_isRunning) return;
+    _selectedTarget = target;
+    notifyListeners();
+  }
+
+  // Base steps — Clean and Get always run
+  // Build step is dynamically set from selectedTarget in _buildPipelineSteps()
   final List<PipelineStep> _baseSteps = [
     PipelineStep('Clean', 'flutter clean'),
     PipelineStep('Get', 'flutter pub get'),
-    PipelineStep('Build', 'flutter build apk'),
   ];
 
   final List<PipelineStep> _pipelineSteps = [];
@@ -33,7 +53,6 @@ class BuildViewModel extends ChangeNotifier {
   bool? _isSuccess;
   bool? get isSuccess => _isSuccess;
 
-  // True when build has finished (success or failure) — drives Reset button visibility
   bool get isFinished => !_isRunning && _isSuccess != null;
 
   final List<LogEntry> _logs = [];
@@ -45,10 +64,6 @@ class BuildViewModel extends ChangeNotifier {
   bool _configLoaded = false;
   bool _isConfigLoading = false;
   bool get isConfigLoading => _isConfigLoading;
-
-  BuildViewModel() {
-    _pipelineSteps.addAll(_baseSteps);
-  }
 
   void togglePlugin(String id) {
     if (_enabledPlugins.contains(id)) {
@@ -91,10 +106,11 @@ class BuildViewModel extends ChangeNotifier {
 
     await loadConfig();
     _resetState();
+    _buildStartTime = DateTime.now();
 
     _pipelineSteps
       ..clear()
-      ..addAll(_buildPipelineSteps());
+      ..addAll(_buildPipelineSteps(projectPath));
 
     notifyListeners();
 
@@ -120,16 +136,22 @@ class BuildViewModel extends ChangeNotifier {
           notifyListeners();
         });
 
-    process.exitCode.then((code) {
+    process.exitCode.then((code) async {
       if (_process == null) return;
+
       _isRunning = false;
       _isSuccess = code == 0;
+
       _logs.add(
         LogEntry(
           '>>> Build ${_isSuccess! ? 'SUCCESS' : 'FAILED'}',
           _isSuccess! ? LogLevel.success : LogLevel.error,
         ),
       );
+
+      // Save to history
+      await _saveHistory(projectPath);
+
       notifyListeners();
     });
   }
@@ -145,15 +167,12 @@ class BuildViewModel extends ChangeNotifier {
     final i = _pipelineSteps.indexWhere(
       (s) => s.state == PipelineStepState.running,
     );
-    if (i != -1) {
-      _pipelineSteps[i].state = PipelineStepState.failed;
-    }
+    if (i != -1) _pipelineSteps[i].state = PipelineStepState.failed;
 
     _logs.add(LogEntry('>>> BUILD STOPPED BY USER', LogLevel.error));
     notifyListeners();
   }
 
-  // Resets everything back to initial idle state — called by Reset button in UI
   void resetBuild() {
     _process?.kill();
     _process = null;
@@ -162,8 +181,8 @@ class BuildViewModel extends ChangeNotifier {
     _completedSteps = 0;
     _progress = 0.0;
     _logs.clear();
+    _buildStartTime = null;
 
-    // Reset steps back to base list with pending state
     _pipelineSteps
       ..clear()
       ..addAll(_baseSteps);
@@ -175,15 +194,49 @@ class BuildViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<PipelineStep> _buildPipelineSteps() {
+  // Build full step list:
+  // Clean → Get → [Test plugin if enabled] → Build (target) → [other plugins]
+  List<PipelineStep> _buildPipelineSteps(String projectPath) {
     final steps = [..._baseSteps];
-    for (final id in _enabledPlugins) {
-      final plugin = PluginRegistry.available[id];
-      if (plugin != null) {
-        steps.addAll(plugin.buildSteps());
+
+    // Test plugin runs BEFORE build if enabled
+    if (_enabledPlugins.contains('test')) {
+      final testPlugin = PluginRegistry.available['test'];
+      if (testPlugin != null) {
+        steps.addAll(testPlugin.buildSteps());
       }
     }
+
+    // Build step uses the selected target's command
+    steps.add(PipelineStep('Build', _selectedTarget.command));
+
+    // All other enabled plugins run after build
+    for (final id in _enabledPlugins) {
+      if (id == 'test') continue; // already added before build
+      final plugin = PluginRegistry.available[id];
+      if (plugin != null) steps.addAll(plugin.buildSteps());
+    }
+
     return steps;
+  }
+
+  Future<void> _saveHistory(String projectPath) async {
+    final duration = _buildStartTime != null
+        ? DateTime.now().difference(_buildStartTime!)
+        : Duration.zero;
+
+    final record = BuildHistoryRecord(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      projectName: projectPath.split('/').last,
+      projectPath: projectPath,
+      target: _selectedTarget,
+      success: _isSuccess ?? false,
+      timestamp: DateTime.now(),
+      duration: duration,
+      outputPath: _selectedTarget.outputPath(projectPath),
+    );
+
+    await historyViewModel.addRecord(record);
   }
 
   void _trackStep(String line) {
@@ -226,8 +279,9 @@ class BuildViewModel extends ChangeNotifier {
     if (l.contains('BUILD::SUCCESS')) return LogLevel.success;
     if (l.startsWith('ERROR:') ||
         l.contains('EXCEPTION') ||
-        l.contains('FATAL'))
+        l.contains('FATAL')) {
       return LogLevel.error;
+    }
     if (l.contains('WARNING:') || l.contains('WARN:')) return LogLevel.warning;
     if (l.contains('SUCCESS') || l.contains('::DONE')) return LogLevel.success;
     return LogLevel.info;
