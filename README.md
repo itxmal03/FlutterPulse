@@ -33,7 +33,6 @@
 
 ## 📸 Screenshots
 
-Place your screenshots in the `assets/screenshots/` folder:
 
 ### Pipeline Dashboard
 ![Pipeline Dashboard](assets/screenshots/dashboard.png)
