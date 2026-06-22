@@ -329,10 +329,9 @@ FlutterPulse is released under the **MIT License**. See the [LICENSE](LICENSE) f
 
 ## 🙏 Acknowledgments
 
-- Built with ❤️ using Flutter
+- Built using Flutter
 - Developed by **Muhammad Aftab Liaqat** at **Al-Najaf IT Solutions**
 - Inspired by CI/CD tools and the need for a lightweight Flutter automation solution
-- Icons by [Material Icons](https://fonts.google.com/icons)
 
 ---
 
