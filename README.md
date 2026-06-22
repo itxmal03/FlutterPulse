@@ -142,8 +142,7 @@ flutter_pulse/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/MuhammadAftab01/flutter_pulse.git
-   cd flutter_pulse
+   git clone https://github.com/itxmal03/FlutterPulse
    ```
 
 2. **Install dependencies**
