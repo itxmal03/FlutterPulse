@@ -1,3 +1,5 @@
+import 'dart:io';
+
 enum BuildTarget {
   apk,
   linux,
@@ -5,7 +7,7 @@ enum BuildTarget {
   windows,
   deb;
 
-  // Display label shown in dropdown
+  // display label
   String get label {
     switch (this) {
       case BuildTarget.apk:
@@ -21,7 +23,7 @@ enum BuildTarget {
     }
   }
 
-  // The actual flutter build command arg
+  // The actual flutter build command
   String get command {
     switch (this) {
       case BuildTarget.apk:
@@ -37,7 +39,7 @@ enum BuildTarget {
     }
   }
 
-  // Where Flutter outputs the build artifact for this target
+  // Where Flutter outputs the artifact
   String outputPath(String projectPath) {
     switch (this) {
       case BuildTarget.apk:
@@ -53,7 +55,7 @@ enum BuildTarget {
     }
   }
 
-  // Short tag stored in history JSON
+  // Short key stored in JSON
   String get key => name;
 
   static BuildTarget fromKey(String key) {
@@ -61,5 +63,22 @@ enum BuildTarget {
       (t) => t.key == key,
       orElse: () => BuildTarget.apk,
     );
+  }
+
+  // Check if this target can be built on the current OS
+  bool get isSupportedOnCurrentPlatform {
+    final os = Platform.operatingSystem;
+    switch (this) {
+      case BuildTarget.apk:
+        return true; // APK builds on any OS
+      case BuildTarget.linux:
+        return os == 'linux';
+      case BuildTarget.web:
+        return true; // web builds anywhere
+      case BuildTarget.windows:
+        return os == 'windows';
+      case BuildTarget.deb:
+        return os == 'linux';
+    }
   }
 }

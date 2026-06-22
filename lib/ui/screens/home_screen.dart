@@ -56,31 +56,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
-// class _PlaceholderPanel extends StatelessWidget {
-//   final String label;
-//   const _PlaceholderPanel({required this.label});
-//   @override
-//   Widget build(BuildContext context) {
-//     return Center(
-//       child: Column(
-//         mainAxisSize: MainAxisSize.min,
-//         children: [
-//           Icon(
-//             Icons.construction_rounded,
-//             size: 48,
-//             color: AppColors.textMuted,
-//           ),
-//           const SizedBox(height: 12),
-//           Text(
-//             '$label panel coming soon',
-//             style: const TextStyle(
-//               color: AppColors.textSecondary,
-//               fontSize: 14,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }

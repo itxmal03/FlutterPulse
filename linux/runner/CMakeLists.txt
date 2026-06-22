@@ -24,3 +24,9 @@ target_link_libraries(${BINARY_NAME} PRIVATE flutter)
 target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::GTK)
 
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
+
+install(FILES
+  resources/logo.png
+  DESTINATION share/pixmaps
+  RENAME com.example.flutter_pulse.png
+)

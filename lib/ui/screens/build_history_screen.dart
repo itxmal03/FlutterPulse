@@ -159,8 +159,6 @@ class _BuildHistoryScreenState extends State<BuildHistoryScreen> {
   }
 }
 
-// ── Single history tile ───────────────────────────────────────────────────────
-
 class _HistoryTile extends StatelessWidget {
   final BuildHistoryRecord record;
   final VoidCallback onDelete;
@@ -187,14 +185,14 @@ class _HistoryTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Status icon
+          // status icon
           Padding(
             padding: const EdgeInsets.only(top: 2),
             child: Icon(icon, size: 18, color: color),
           ),
           const SizedBox(width: 12),
 
-          // Main info
+          // main info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,7 +221,7 @@ class _HistoryTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
 
-                // Output path with open button
+                // output path with open button
                 Row(
                   children: [
                     Expanded(
@@ -297,10 +295,18 @@ class _HistoryTile extends StatelessWidget {
     final now = DateTime.now();
     final diff = now.difference(dt);
 
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    if (diff.inMinutes < 1) {
+      return 'Just now';
+    }
+    if (diff.inHours < 1) {
+      return '${diff.inMinutes}m ago';
+    }
+    if (diff.inDays < 1) {
+      return '${diff.inHours}h ago';
+    }
+    if (diff.inDays < 7) {
+      return '${diff.inDays}d ago';
+    }
 
     return '${dt.day}/${dt.month}/${dt.year}';
   }
@@ -315,7 +321,7 @@ class _HistoryTile extends StatelessWidget {
   void _openArtifact(String path) {
     if (path.isEmpty) return;
 
-    // Check if path exists; if it's a file, open its parent folder
+    // Check if path exists , if it's a file, open its parent folder
     final entity = FileSystemEntity.typeSync(path);
     String target;
     if (entity == FileSystemEntityType.file) {
@@ -337,8 +343,6 @@ class _HistoryTile extends StatelessWidget {
     }
   }
 }
-
-// ── Target chip ───────────────────────────────────────────────────────────────
 
 class _TargetChip extends StatelessWidget {
   final BuildTarget target;
@@ -375,15 +379,25 @@ class _TargetChip extends StatelessWidget {
   IconData _icon(BuildTarget t) {
     switch (t) {
       case BuildTarget.apk:
-        return Icons.android_rounded;
+        {
+          return Icons.android_rounded;
+        }
       case BuildTarget.linux:
-        return Icons.computer_rounded;
+        {
+          return Icons.computer_rounded;
+        }
       case BuildTarget.web:
-        return Icons.language_rounded;
+        {
+          return Icons.language_rounded;
+        }
       case BuildTarget.windows:
-        return Icons.window_rounded;
+        {
+          return Icons.window_rounded;
+        }
       case BuildTarget.deb:
-        return Icons.archive_rounded;
+        {
+          return Icons.archive_rounded;
+        }
     }
   }
 }

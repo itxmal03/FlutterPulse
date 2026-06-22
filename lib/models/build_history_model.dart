@@ -8,8 +8,8 @@ class BuildHistoryRecord {
   final bool success;
   final DateTime timestamp;
   final Duration duration;
-  final String outputPath; // Original Flutter output
-  final String? storedArtifactPath; // Path to copied versioned artifact
+  final String outputPath; // original flutter output
+  final String? storedArtifactPath; // path to copied versioned artifact
 
   const BuildHistoryRecord({
     required this.id,

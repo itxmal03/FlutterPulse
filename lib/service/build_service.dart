@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter_pulse/models/pipeline_step_model.dart';
 
 class BuildService {
-  // Use /bin/sh on Unix-like systems; for Windows we'd need cmd.exe, but we'll keep it Unix-only for now.
+  // use /bin/sh on Unix-like systems; for Windows needed cmd.exe, but Unix-only for now.
   static const String _shell = '/bin/sh';
 
   Future<Process> runSteps(List<PipelineStep> steps, String projectPath) async {
@@ -26,7 +26,7 @@ class BuildService {
     buffer.writeln('');
 
     for (final step in steps) {
-      // Use 'flutter' from PATH – no absolute path
+      // use 'flutter' from PATH – no absolute path
       final cmd = step.command;
 
       buffer.writeln('echo "STEP::${step.label}::start"');

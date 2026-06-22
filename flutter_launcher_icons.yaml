@@ -1,0 +1,22 @@
+flutter_launcher_icons:
+  image_path: "assets/logo/logo.png"
+  image_path_android: "assets/logo/logo.png"
+  image_path_ios: "assets/logo/logo.png"
+  min_sdk_android: 21
+  
+  android:
+    notification_icon: "notification_icon"
+    notification_icon_color: "#0EA5E9"
+    generate: true
+  
+  ios:
+    generate: true
+  
+  linux:
+    generate: true
+  
+  windows:
+    generate: true
+  
+  macos:
+    generate: true

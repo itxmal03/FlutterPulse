@@ -26,7 +26,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
   Widget build(BuildContext context) {
     final vm = context.watch<BuildViewModel>();
 
-    // FIX: read plugin list from PluginRegistry — NOT from config.json
+    // read plugin list from PluginRegistry — NOT from config.json
     // config.json only controls the enabled/disabled toggle state
     final plugins = PluginRegistry.all;
 
@@ -68,7 +68,7 @@ class _PluginsScreenState extends State<PluginsScreen> {
           ),
         ),
         const SizedBox(height: 20),
-        // FIX: iterate PluginRegistry.all — each plugin has id, name, description etc.
+        // iterate PluginRegistry.all
         ...plugins.map((plugin) => _pluginTile(vm: vm, plugin: plugin)),
       ],
     );
@@ -95,8 +95,8 @@ class _PluginsScreenState extends State<PluginsScreen> {
             height: 40,
             decoration: BoxDecoration(
               color: isEnabled
-                  ? Colors.green.withOpacity(0.2)
-                  : Colors.grey.withOpacity(0.2),
+                  ? Colors.green.withValues(alpha: 0.2)
+                  : Colors.grey.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -127,7 +127,10 @@ class _PluginsScreenState extends State<PluginsScreen> {
                 const SizedBox(height: 2),
                 Text(
                   'v${plugin.version} · ${plugin.author}',
-                  style: const TextStyle(color: Color(0xFF555E6E), fontSize: 11),
+                  style: const TextStyle(
+                    color: Color(0xFF555E6E),
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),

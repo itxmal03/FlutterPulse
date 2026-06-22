@@ -11,7 +11,7 @@ class HistoryService {
     return File('${dir.path}/history.json');
   }
 
-  // Load all records — newest first
+  // load all records sorted by  newest first
   static Future<List<BuildHistoryRecord>> loadAll() async {
     try {
       final file = _file;
@@ -25,7 +25,7 @@ class HistoryService {
           .map((e) => BuildHistoryRecord.fromJson(e as Map<String, dynamic>))
           .toList();
 
-      // Sort newest first
+      // sort newest first
       records.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       return records;
     } catch (_) {
@@ -49,11 +49,11 @@ class HistoryService {
         ).convert(capped.map((r) => r.toJson()).toList()),
       );
     } catch (_) {
-      // History save failure is non-fatal — build still succeeded/failed
+      // history save failure is non-fatal — build still succeeded/failed
     }
   }
 
-  // Delete a single record by id
+  // delete a single record by id
   static Future<void> delete(String id) async {
     try {
       final existing = await loadAll();
@@ -67,7 +67,7 @@ class HistoryService {
     } catch (_) {}
   }
 
-  // Clear all history
+  // clear all history
   static Future<void> clearAll() async {
     try {
       final file = _file;

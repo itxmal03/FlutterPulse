@@ -11,13 +11,21 @@ class LogLine extends StatelessWidget {
   Color get _textColor {
     switch (entry.level) {
       case LogLevel.success:
-        return AppColors.success;
+        {
+          return AppColors.success;
+        }
       case LogLevel.error:
-        return AppColors.error;
+        {
+          return AppColors.error;
+        }
       case LogLevel.warning:
-        return AppColors.warning;
+        {
+          return AppColors.warning;
+        }
       case LogLevel.info:
-        return AppColors.info;
+        {
+          return AppColors.info;
+        }
     }
   }
 

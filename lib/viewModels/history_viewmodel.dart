@@ -9,7 +9,7 @@ class HistoryViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  // Load history from disk
+  // load history from disk
   Future<void> load() async {
     _isLoading = true;
     notifyListeners();
@@ -20,14 +20,14 @@ class HistoryViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Called by BuildViewModel after each build finishes — adds record and refreshes list
+  // called by BuildViewModel after each build finishes — adds record and refreshes list
   Future<void> addRecord(BuildHistoryRecord record) async {
     await HistoryService.save(record);
     _records.insert(0, record);
     notifyListeners();
   }
 
-  // Delete one record
+  //delete one record
   Future<void> deleteRecord(String id) async {
     await HistoryService.delete(id);
     _records.removeWhere((r) => r.id == id);

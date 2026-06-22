@@ -7,7 +7,7 @@ import 'package:flutter_pulse/viewModels/pick_directory_viewmodel.dart';
 import 'package:flutter_pulse/viewModels/sdk_info_viewmodel.dart';
 import 'package:flutter_pulse/viewModels/theme_viewmodel.dart';
 import 'package:provider/provider.dart';
-
+ 
 void main() {
   runApp(
     MultiProvider(
@@ -15,7 +15,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => ThemeViewmodel()),
         ChangeNotifierProvider(create: (_) => PickDirectoryViewmodel()),
         ChangeNotifierProvider(create: (_) => SdkInfoViewmodel()),
-        // HistoryViewModel must be created before BuildViewModel
+        // historyViewModel must be created before BuildViewModel
         // because BuildViewModel holds a reference to it
         ChangeNotifierProvider(create: (_) => HistoryViewModel()),
         ChangeNotifierProxyProvider<HistoryViewModel, BuildViewModel>(

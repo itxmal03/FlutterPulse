@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 class ArtifactStorageService {
-  /// Copies the built artifact from [sourcePath] to a versioned folder under
+  /// copies the built artifact from [sourcePath] to a versioned folder under
   /// ~/.flutter_pulse/artifacts/{projectName}/{timestamp}/ and returns the new path.
   static Future<String> storeArtifact(
     String projectPath,

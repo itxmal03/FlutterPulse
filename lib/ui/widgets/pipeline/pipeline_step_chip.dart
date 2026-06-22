@@ -21,14 +21,14 @@ class PipelineStepChip extends StatelessWidget {
         icon = null;
         break;
       case PipelineStepState.done:
-        bg = AppColors.success.withOpacity(0.12);
-        border = AppColors.success.withOpacity(0.4);
+        bg = AppColors.success.withValues(alpha:0.12);
+        border = AppColors.success.withValues(alpha:0.4);
         textColor = AppColors.success;
         icon = Icons.check_rounded;
         break;
       case PipelineStepState.failed:
-        bg = AppColors.error.withOpacity(0.12);
-        border = AppColors.error.withOpacity(0.4);
+        bg = AppColors.error.withValues(alpha:0.12);
+        border = AppColors.error.withValues(alpha:0.4);
         textColor = AppColors.error;
         icon = Icons.close_rounded;
         break;

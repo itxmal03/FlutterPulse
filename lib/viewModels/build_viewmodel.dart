@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_pulse/core/pipeline/plugin_registry.dart';
 import 'package:flutter_pulse/models/build_history_model.dart';
@@ -16,7 +15,7 @@ import 'package:flutter_pulse/viewModels/history_viewmodel.dart';
 class BuildViewModel extends ChangeNotifier {
   final _service = BuildService();
 
-  // HistoryViewModel reference — injected so we can push records after build
+  // historyViewModel reference  injected so we can push records after build
   final HistoryViewModel historyViewModel;
 
   BuildViewModel({required this.historyViewModel});
@@ -24,7 +23,7 @@ class BuildViewModel extends ChangeNotifier {
   Process? _process;
   DateTime? _buildStartTime;
 
-  // Selected build target — default APK
+  // selected build target default is set APK
   BuildTarget _selectedTarget = BuildTarget.apk;
   BuildTarget get selectedTarget => _selectedTarget;
 
@@ -34,7 +33,7 @@ class BuildViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Base steps — Clean and Get always run
+  // Base steps clean and get always run
   // Build step is dynamically set from selectedTarget in _buildPipelineSteps()
   final List<PipelineStep> _baseSteps = [
     PipelineStep('Clean', 'flutter clean'),
@@ -95,7 +94,7 @@ class BuildViewModel extends ChangeNotifier {
       }
       _configLoaded = true;
     } catch (_) {
-      // Config missing or malformed — no plugins enabled by default
+      // config missing or malformed means no plugins enabled by default
     } finally {
       _isConfigLoading = false;
       notifyListeners();
@@ -104,6 +103,24 @@ class BuildViewModel extends ChangeNotifier {
 
   Future<void> startBuild(String projectPath) async {
     if (_isRunning) return;
+
+    // Validate that the selected build target is supported on this OS
+    if (!_selectedTarget.isSupportedOnCurrentPlatform) {
+      _logs.add(
+        LogEntry(
+          'ERROR: Building for "${_selectedTarget.label}" is not supported on ${Platform.operatingSystem}.',
+          LogLevel.error,
+        ),
+      );
+      _logs.add(
+        LogEntry(
+          'Please choose a target that works on this OS (e.g., APK, Web, Linux).',
+          LogLevel.warning,
+        ),
+      );
+      notifyListeners(); // show the error logs in UI
+      return; // prevent the build from starting
+    }
 
     await loadConfig();
     _resetState();
@@ -150,7 +167,7 @@ class BuildViewModel extends ChangeNotifier {
         ),
       );
 
-      // Save to history (with artifact storage)
+      // save to history with artifact storage
       await _saveHistory(projectPath);
 
       notifyListeners();
@@ -195,18 +212,16 @@ class BuildViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Build full step list:
-
   // Clean → Get → [Test plugin if enabled] → Build (target) → [other plugins]
   List<PipelineStep> _buildPipelineSteps(String projectPath) {
     final steps = <PipelineStep>[];
 
-    // Always start with Clean and Get
+    // always start with Clean and Get
     steps.addAll(_baseSteps);
 
-    // Collect pre‑build plugin steps (they run after Get, before Build)
+    // collect pre‑build plugin steps they run after Get, before Build
     final preBuildSteps = <PipelineStep>[];
-    // Collect post‑build plugin steps (they run after Build)
+    // collect post‑build plugin steps they run after Build
     final postBuildSteps = <PipelineStep>[];
 
     // Iterate enabled plugins in the order they appear in PluginRegistry.available
@@ -220,13 +235,13 @@ class BuildViewModel extends ChangeNotifier {
       }
     }
 
-    // Add pre‑build steps (e.g., lint, format, backup)
+    // Add pre‑build steps e.g., lint, format, backup
     steps.addAll(preBuildSteps);
 
-    // Then the main Build step using selected target
+    // Then the main build step using selected target
     steps.add(PipelineStep('Build', _selectedTarget.command));
 
-    // Finally post‑build steps (e.g., notify)
+    // finally post‑build steps e.g. notify
     steps.addAll(postBuildSteps);
 
     return steps;
