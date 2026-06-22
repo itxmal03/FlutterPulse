@@ -4,7 +4,7 @@ import 'package:flutter_pulse/core/result.dart';
 class FileService {
   static Future<Result<String>> getDirectoryPath() async {
     try {
-      final path = await FilePicker.platform.getDirectoryPath();
+      final path = await FilePicker.getDirectoryPath();
 
       if (path == null) {
         return Result.failure("User Cancelled");
