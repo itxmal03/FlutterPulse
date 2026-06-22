@@ -7,5 +7,9 @@ abstract class PipelinePlugin {
   String get version;
   String get author;
 
+  /// Whether this plugin's steps should run before the build step.
+  /// Defaults to false (post‑build).
+  bool get isPreBuild => false;
+
   List<PipelineStep> buildSteps();
 }

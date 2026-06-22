@@ -7,11 +7,11 @@ class FileService {
       final path = await FilePicker.getDirectoryPath();
 
       if (path == null) {
-        return Result.failure("User Cancelled");
+        return Result.failure("User cancelled");
       }
       return Result.success(path);
     } catch (e) {
-      return Result.failure("Failed to pick directory");
+      return Result.failure("Failed to pick directory: $e");
     }
   }
 }

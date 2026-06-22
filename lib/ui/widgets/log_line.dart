@@ -33,7 +33,7 @@ class LogLine extends StatelessWidget {
             width: 36,
             child: Text(
               lineNumber.toString().padLeft(3),
-              style:  TextStyle(
+              style: TextStyle(
                 color: AppColors.textMuted,
                 fontSize: 11.5,
                 fontFamily: 'monospace',
@@ -42,7 +42,7 @@ class LogLine extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
+            child: SelectableText(
               entry.message,
               style: TextStyle(
                 color: _textColor,
@@ -50,6 +50,8 @@ class LogLine extends StatelessWidget {
                 fontFamily: 'monospace',
                 height: 1.55,
               ),
+              // Optional selection color
+              selectionColor: AppColors.accent.withValues(alpha: 0.3),
             ),
           ),
         ],

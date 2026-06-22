@@ -8,6 +8,7 @@ import 'package:flutter_pulse/models/build_history_model.dart';
 import 'package:flutter_pulse/models/build_target.dart';
 import 'package:flutter_pulse/models/log_entry_model.dart';
 import 'package:flutter_pulse/models/pipeline_step_model.dart';
+import 'package:flutter_pulse/service/artifact_storage_service.dart';
 import 'package:flutter_pulse/service/build_service.dart';
 import 'package:flutter_pulse/service/config_service.dart';
 import 'package:flutter_pulse/viewModels/history_viewmodel.dart';
@@ -149,7 +150,7 @@ class BuildViewModel extends ChangeNotifier {
         ),
       );
 
-      // Save to history
+      // Save to history (with artifact storage)
       await _saveHistory(projectPath);
 
       notifyListeners();
@@ -195,27 +196,38 @@ class BuildViewModel extends ChangeNotifier {
   }
 
   // Build full step list:
+
   // Clean → Get → [Test plugin if enabled] → Build (target) → [other plugins]
   List<PipelineStep> _buildPipelineSteps(String projectPath) {
-    final steps = [..._baseSteps];
+    final steps = <PipelineStep>[];
 
-    // Test plugin runs BEFORE build if enabled
-    if (_enabledPlugins.contains('test')) {
-      final testPlugin = PluginRegistry.available['test'];
-      if (testPlugin != null) {
-        steps.addAll(testPlugin.buildSteps());
+    // Always start with Clean and Get
+    steps.addAll(_baseSteps);
+
+    // Collect pre‑build plugin steps (they run after Get, before Build)
+    final preBuildSteps = <PipelineStep>[];
+    // Collect post‑build plugin steps (they run after Build)
+    final postBuildSteps = <PipelineStep>[];
+
+    // Iterate enabled plugins in the order they appear in PluginRegistry.available
+    for (final id in _enabledPlugins) {
+      final plugin = PluginRegistry.available[id];
+      if (plugin == null) continue;
+      if (plugin.isPreBuild) {
+        preBuildSteps.addAll(plugin.buildSteps());
+      } else {
+        postBuildSteps.addAll(plugin.buildSteps());
       }
     }
 
-    // Build step uses the selected target's command
+    // Add pre‑build steps (e.g., lint, format, backup)
+    steps.addAll(preBuildSteps);
+
+    // Then the main Build step using selected target
     steps.add(PipelineStep('Build', _selectedTarget.command));
 
-    // All other enabled plugins run after build
-    for (final id in _enabledPlugins) {
-      if (id == 'test') continue; // already added before build
-      final plugin = PluginRegistry.available[id];
-      if (plugin != null) steps.addAll(plugin.buildSteps());
-    }
+    // Finally post‑build steps (e.g., notify)
+    steps.addAll(postBuildSteps);
 
     return steps;
   }
@@ -225,6 +237,24 @@ class BuildViewModel extends ChangeNotifier {
         ? DateTime.now().difference(_buildStartTime!)
         : Duration.zero;
 
+    String outputPath = _selectedTarget.outputPath(projectPath);
+    String? storedArtifactPath;
+
+    // Only store artifact if build succeeded
+    if (_isSuccess == true) {
+      try {
+        storedArtifactPath = await ArtifactStorageService.storeArtifact(
+          projectPath,
+          outputPath,
+        );
+      } catch (e) {
+        _logs.add(
+          LogEntry('Warning: Could not store artifact: $e', LogLevel.warning),
+        );
+        // Still save record without stored path
+      }
+    }
+
     final record = BuildHistoryRecord(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       projectName: projectPath.split('/').last,
@@ -233,7 +263,8 @@ class BuildViewModel extends ChangeNotifier {
       success: _isSuccess ?? false,
       timestamp: DateTime.now(),
       duration: duration,
-      outputPath: _selectedTarget.outputPath(projectPath),
+      outputPath: outputPath,
+      storedArtifactPath: storedArtifactPath,
     );
 
     await historyViewModel.addRecord(record);

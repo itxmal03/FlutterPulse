@@ -13,25 +13,33 @@ class PickDirectoryViewmodel extends ChangeNotifier {
     if (_isLoading) return false;
 
     _error = null;
-    _isLoading = true; 
-    
+    _isLoading = true;
     notifyListeners();
 
-    final result = await ProjectService.pickAndValidateProject();
-    if (result.isSuccess) {
-      _projectPath = result.data!.path;
+    try {
+      final result = await ProjectService.pickAndValidateProject();
 
+      if (result.isSuccess) {
+        _projectPath = result.data!.path;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _error = result.error;
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = "Unexpected error: $e";
       _isLoading = false;
       notifyListeners();
-      return true;
+      return false;
     }
-    _error = result.error;
-    _isLoading = false;
-    notifyListeners();
-    return false;
   }
 
   void clearError() {
     _error = null;
+    notifyListeners();
   }
 }

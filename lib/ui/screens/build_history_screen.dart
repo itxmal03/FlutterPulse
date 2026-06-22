@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_pulse/core/constants.dart';
 import 'package:flutter_pulse/models/build_history_model.dart';
@@ -175,6 +174,9 @@ class _HistoryTile extends StatelessWidget {
         ? Icons.check_circle_rounded
         : Icons.cancel_rounded;
 
+    // Prefer storedArtifactPath; fallback to outputPath
+    final artifactPath = record.storedArtifactPath ?? record.outputPath;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -221,32 +223,54 @@ class _HistoryTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
 
-                // Output path
-                GestureDetector(
-                  onTap: () => _openFolder(record.outputPath),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.folder_open_rounded,
-                        size: 12,
-                        color: AppColors.accent,
-                      ),
-                      const SizedBox(width: 5),
-                      Flexible(
-                        child: Text(
-                          record.outputPath,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.accent,
-                            fontSize: 11,
-                            fontFamily: 'monospace',
-                            decoration: TextDecoration.underline,
-                            decorationColor: AppColors.accent,
-                          ),
+                // Output path with open button
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _openArtifact(artifactPath),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.folder_open_rounded,
+                              size: 12,
+                              color: AppColors.accent,
+                            ),
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                artifactPath,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: AppColors.accent,
+                                  fontSize: 11,
+                                  fontFamily: 'monospace',
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: AppColors.accent,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Open button (folder icon)
+                    IconButton(
+                      onPressed: () => _openArtifact(artifactPath),
+                      icon: Icon(
+                        Icons.open_in_new_rounded,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 28,
+                        minHeight: 28,
+                      ),
+                      tooltip: 'Open artifact',
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -288,11 +312,29 @@ class _HistoryTile extends StatelessWidget {
     return '${m}m ${s}s';
   }
 
-  void _openFolder(String path) {
-    // Open the folder in the system file manager
-    final dir = Directory(path);
-    final target = dir.existsSync() ? path : File(path).parent.path;
-    Process.run('xdg-open', [target]);
+  void _openArtifact(String path) {
+    if (path.isEmpty) return;
+
+    // Check if path exists; if it's a file, open its parent folder
+    final entity = FileSystemEntity.typeSync(path);
+    String target;
+    if (entity == FileSystemEntityType.file) {
+      target = File(path).parent.path;
+    } else if (entity == FileSystemEntityType.directory) {
+      target = path;
+    } else {
+      // fallback to the directory of the path
+      target = File(path).parent.path;
+    }
+
+    // Open in file manager
+    if (Platform.isLinux) {
+      Process.run('xdg-open', [target]);
+    } else if (Platform.isMacOS) {
+      Process.run('open', [target]);
+    } else if (Platform.isWindows) {
+      Process.run('explorer', [target.replaceAll('/', '\\')]);
+    }
   }
 }
 

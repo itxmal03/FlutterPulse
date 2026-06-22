@@ -2,5 +2,21 @@
   "test": {
     "enabled": true,
     "args": {}
+  },
+  "lint": {
+    "enabled": false,
+    "args": {}
+  },
+  "format": {
+    "enabled": false,
+    "args": {}
+  },
+  "backup": {
+    "enabled": false,
+    "args": {}
+  },
+  "notify": {
+    "enabled": false,
+    "args": {}
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide StepState;
+import 'package:flutter/services.dart';
 import 'package:flutter_pulse/core/constants.dart';
 import 'package:flutter_pulse/models/build_target.dart';
 import 'package:flutter_pulse/models/pipeline_step_model.dart';
@@ -278,77 +279,111 @@ class _PipelineDashboardState extends State<PipelineDashboard> {
     );
   }
 
-  Widget _buildLogsSection() {
-    final vm = context.watch<BuildViewModel>();
-    _scrollToBottomIfNeeded(vm.logs.length);
+Widget _buildLogsSection() {
+  final vm = context.watch<BuildViewModel>();
+  _scrollToBottomIfNeeded(vm.logs.length);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border(bottom: BorderSide(color: AppColors.border)),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.receipt_long_rounded,
-                size: 14,
-                color: AppColors.textSecondary,
-              ),
-              const SizedBox(width: 7),
-              Text(
-                'Live Console',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${vm.logs.length} lines',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 11.5),
-              ),
-              const SizedBox(width: 14),
-              InkWell(
-                borderRadius: BorderRadius.circular(4),
-                onTap: vm.clearLogs,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                  child: Text('Clear', style: TextStyle(fontSize: 12)),
-                ),
-              ),
-            ],
-          ),
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border(bottom: BorderSide(color: AppColors.border)),
         ),
-        Expanded(
-          child: Container(
-            color: const Color(0xFF090B0F),
-            padding: const EdgeInsets.all(16),
-            child: vm.logs.isEmpty
-                ? Center(
-                    child: Text(
-                      'No logs yet — press Run Pipeline to start.',
-                      style: TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 13,
-                      ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.receipt_long_rounded,
+              size: 14,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(width: 7),
+            Text(
+              'Live Console',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              '${vm.logs.length} lines',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 11.5),
+            ),
+            const SizedBox(width: 14),
+            // Copy All button
+            InkWell(
+              borderRadius: BorderRadius.circular(4),
+              onTap: vm.logs.isEmpty ? null : () => _copyAllLogs(vm),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                child: Text(
+                  'Copy All',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: vm.logs.isEmpty ? AppColors.textMuted : AppColors.accent,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            InkWell(
+              borderRadius: BorderRadius.circular(4),
+              onTap: vm.clearLogs,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                child: Text('Clear', style: TextStyle(fontSize: 12)),
+              ),
+            ),
+          ],
+        ),
+      ),
+      Expanded(
+        child: Container(
+          color: const Color(0xFF090B0F),
+          padding: const EdgeInsets.all(16),
+          child: vm.logs.isEmpty
+              ? Center(
+                  child: Text(
+                    'No logs yet — press Run Pipeline to start.',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 13,
                     ),
-                  )
-                : ListView.builder(
+                  ),
+                )
+              : SelectionArea(
+                  child: ListView.builder(
                     controller: _logScrollController,
                     itemCount: vm.logs.length,
                     itemBuilder: (ctx, i) =>
                         LogLine(entry: vm.logs[i], lineNumber: i + 1),
                   ),
-          ),
+                ),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
+
+// Add this helper method inside _PipelineDashboardState
+void _copyAllLogs(BuildViewModel vm) {
+  final text = vm.logs.asMap().entries.map((entry) {
+    final index = entry.key + 1;
+    final line = entry.value.message;
+    return '${index.toString().padLeft(3)}  $line';
+  }).join('\n');
+  Clipboard.setData(ClipboardData(text: text));
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('All logs copied to clipboard'),
+      duration: Duration(seconds: 2),
+    ),
+  );
+}
 }
 
 // ── Build target dropdown ─────────────────────────────────────────────────────

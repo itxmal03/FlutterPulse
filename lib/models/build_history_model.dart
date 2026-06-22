@@ -8,7 +8,8 @@ class BuildHistoryRecord {
   final bool success;
   final DateTime timestamp;
   final Duration duration;
-  final String outputPath;
+  final String outputPath; // Original Flutter output
+  final String? storedArtifactPath; // Path to copied versioned artifact
 
   const BuildHistoryRecord({
     required this.id,
@@ -19,6 +20,7 @@ class BuildHistoryRecord {
     required this.timestamp,
     required this.duration,
     required this.outputPath,
+    this.storedArtifactPath,
   });
 
   Map<String, dynamic> toJson() => {
@@ -30,6 +32,7 @@ class BuildHistoryRecord {
     'timestamp': timestamp.toIso8601String(),
     'durationMs': duration.inMilliseconds,
     'outputPath': outputPath,
+    'storedArtifactPath': storedArtifactPath,
   };
 
   factory BuildHistoryRecord.fromJson(Map<String, dynamic> json) {
@@ -42,6 +45,7 @@ class BuildHistoryRecord {
       timestamp: DateTime.parse(json['timestamp'] as String),
       duration: Duration(milliseconds: json['durationMs'] as int),
       outputPath: json['outputPath'] as String,
+      storedArtifactPath: json['storedArtifactPath'] as String?,
     );
   }
 }
