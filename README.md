@@ -12,7 +12,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey.svg)](https://flutter.dev)
 [![Author](https://img.shields.io/badge/Author-Muhammad%20Aftab%20Liaqat-blue.svg)](https://github.com)
 
-**FlutterPulse** is a lightweight, open-source CI/CD automation tool for Flutter developers. Built by [Al-Najaf IT Solutions](https://alnajaf-it.com), it provides a desktop application that automates your Flutter project builds with a clean UI, live logging, build history, and a powerful plugin system.
+**FlutterPulse** is a lightweight, open-source CI/CD automation tool for Flutter developers. Built by [Al-Najaf IT Solutions], it provides a desktop application that automates your Flutter project builds with a clean UI, live logging, build history, and a powerful plugin system.
 
 ![FlutterPulse Dashboard](assets/screenshots/dashboard.png)
 
